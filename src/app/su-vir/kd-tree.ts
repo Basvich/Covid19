@@ -1,0 +1,250 @@
+import {ReturnStatement} from '@angular/compiler';
+import {create} from './ihuman';
+
+export interface IPosition {
+  x: number;
+  y: number;
+}
+
+
+export class Point {
+  constructor(public readonly x: number, public readonly y: number) {}
+  public static from(p: Point) {
+    return new Point(p.x, p.y);
+  }
+
+  public addDis(dx, dy): Point {
+    return new Point(this.x + dx, this.y + dy);
+  }
+
+  public addPoint(other: Point): Point {
+    return new Point(this.x + other.x, this.y + other.y);
+  }
+
+  public sub(other: Point): Point {
+    return new Point(this.x - other.x, this.y - other.y);
+  }
+
+  public equivalent(other: Point): boolean {
+    return this.x === other.x && this.y === other.y;
+  }
+
+  public axisValue(d: number): number {
+    if (d === 0) return this.x;
+    return this.y;
+  }
+}
+
+export class Rectangle {
+  /* public readonly left: number;
+  public readonly right: number;
+  public readonly bottom: number;
+  public readonly top: number; */
+
+  public constructor(
+    public readonly left: number, public readonly right: number,
+    public readonly bottom: number, public readonly top: number) {
+  }
+
+  public static fromRadius(center: IPosition, distance: number): Rectangle {
+    return new Rectangle(center.x - distance, center.x + distance,
+      center.y - distance, center.y + distance);
+  }
+
+  public fullContains(p: IPosition): boolean {
+    return p.x >= this.left && p.x <= this.right && p.y <= this.top && p.y >= this.bottom;
+  }
+
+  public fullContainAxis(axis: number, v: number): boolean {
+    return v >= this.minAxis(axis) && v <= this.maxAxis(axis);
+  }
+
+  public minAxis(d: number) {
+    if (d === 0) return this.left;
+    return this.bottom;
+  }
+
+  public maxAxis(d: number) {
+    if (d === 0) return this.right;
+    return this.top;
+  }
+
+}
+
+export interface IDataPoint {
+  point: IPosition;
+  data: any;
+}
+
+export interface INodeKdTree {
+  location: IDataPoint;
+  left?: INodeKdTree;
+  right?: INodeKdTree;
+}
+
+
+export class KdTree {
+
+  public get count(): number {
+    return this.
+      _count;
+  }
+
+  protected constructor() {}
+  private static K = 2;
+  root: INodeKdTree;
+  private _count: number;
+
+  protected static axisValue(p: IPosition, axis: number): number {
+    if (axis % 2 === 0) return p.x;
+    else return p.y;
+  }
+
+  protected static minimumOld(n1: INodeKdTree, n2: INodeKdTree, depth: number): INodeKdTree {
+    if (!n1) return n2;
+    if (!n2) return n1;
+    const axis = depth % this.K;
+    if (this.axisValue(n1.location.point, axis) <= this.axisValue(n2.location.point, axis)) return n1;
+    else return n2;
+  }
+
+  protected static minimum(x: INodeKdTree, y: INodeKdTree, z: INodeKdTree, depth: number): INodeKdTree {
+    let res = x;
+    const axis = depth % this.K;
+    if (y && this.axisValue(y.location.point, axis) < this.axisValue(res.location.point, axis)) res = y;
+    if (z && this.axisValue(z.location.point, axis) < this.axisValue(res.location.point, axis)) res = z;
+    return res;
+  }
+
+  protected static remove(root: INodeKdTree, toRemove: IDataPoint, depth: number): INodeKdTree {
+    if (!root) return null;
+    const cd = depth % this.K;
+    if (root.location === toRemove) {
+      if (root.right) {
+        const min = this.findMin(root.right, cd, depth + 1);
+        // Copy the minimun to root;
+        root.location = min.location;
+        // Recursively delete the minimum
+        root.right = this.remove(root.right, min.location, depth + 1);
+      } else if (root.left) {
+        const min = this.findMin(root.left, cd, depth + 1);
+        // Copy the minimun to root
+        root.location = min.location;
+        // Recursively delete the minimum
+        root.right = this.remove(root.left, min.location, depth + 1);
+        root.left = null;
+      } else {
+        return null;
+      }
+    }
+    // 2) If current node doesn't contain point, search downward 
+    if (this.axisValue(toRemove.point, cd) < this.axisValue(root.location.point, cd)) {
+      root.left = this.remove(root.left, toRemove, depth + 1);
+    } else {
+      root.right = this.remove(root.right, toRemove, depth + 1);
+    }
+    return root;
+  }
+
+  public static createFrom(points: IDataPoint[]): KdTree {
+    const res = new KdTree();
+    res.root = KdTree.kdTree(points, 0);
+    res._count = points.length;
+    return res;
+  }
+
+  public static findMin(n: INodeKdTree, d: number, depth: number): INodeKdTree {
+    if (!n) return undefined;
+    const cd = depth % this.K;
+    if (d === cd) {
+      if (!n.left) return n;
+      else return this.findMin(n.left, d, depth + 1);
+    } else {
+      const n1 = this.findMin(n.left, d, depth + 1);
+      const n2 = this.findMin(n.right, d, depth + 1);
+      return this.minimum(n, n1, n2, d);
+    }
+  }
+
+  protected static kdTree(points: IDataPoint[], depth: number): INodeKdTree {
+    if (!points || !depth) return null;
+    const kdtree = new KdTree();
+    const axis = depth % this.K;
+    points.sort((p1, p2) => Math.sign(KdTree.axisValue(p1.point, axis) - KdTree.axisValue(p2.point, axis)));
+    const medianIndex = points.length / 2;
+    const node: INodeKdTree = {
+      location: points[medianIndex]
+    };
+    let ln = medianIndex;
+    if (ln > 0) node.left = KdTree.kdTree(points.slice(0, ln), depth + 1);
+    ln = points.length - medianIndex - 1;
+    if (ln > 0) node.right = KdTree.kdTree(points.slice(medianIndex + 1), depth + 1);
+    return node;
+  }
+
+  public GetAll(): IDataPoint[] {
+    const res: Array<IDataPoint> = [];
+    const addtn = (n: INodeKdTree) => {
+      if (!n) return;
+      res.push(n.location);
+      addtn(n.left);
+      addtn(n.right);
+    };
+    return res;
+  }
+
+  public Clone(): KdTree {
+    const res = new KdTree();
+    res.root = this.cloneNode(this.root);
+    res._count = this._count;
+    return res;
+  }
+
+
+  protected cloneNode(from: INodeKdTree): INodeKdTree {
+    if (!from) return undefined;
+    const res: INodeKdTree = {
+      location: from.location,
+      left: this.cloneNode(from.left),
+      right: this.cloneNode(from.right)
+    };
+    return res;
+  }
+
+  protected getInZone(zone: Rectangle, node: INodeKdTree, depth: number, currents: IDataPoint[]): IDataPoint[] {
+    let res = currents;
+    if (!node) return currents;
+    const axis = depth % KdTree.K;
+    if (zone.fullContains(node.location.point)) {
+      if (!res) res = [];
+      res.push(node.location);
+    }
+    if (node.left) {
+      if (zone.minAxis(axis) < KdTree.axisValue(node.location.point, axis)) res = this.getInZone(zone, node.left, depth + 1, res);
+    }
+    if (node.right) {
+      if (zone.minAxis(axis) >= KdTree.axisValue(node.location.point, axis)) res = this.getInZone(zone, node.right, depth + 1, res);
+    }
+  }
+
+  protected traceNode(node: INodeKdTree, depth: number) {
+    if (!node) return;
+    const axis = depth % KdTree.K;
+    const saxis = axis ? 'y' : 'x';
+    console.debug(`${saxis}=${KdTree.axisValue(node.location.point, axis)}  point:${node.location}`);
+    if (node.left) {
+      console.debug('Left:');
+      console.group();
+      this.traceNode(node.left, depth + 1);
+      console.groupEnd();
+    }
+    if (node.right) {
+      console.debug('Right:');
+      console.group();
+      this.traceNode(node.right, depth + 1);
+      console.groupEnd();
+    }
+  }
+
+
+}
