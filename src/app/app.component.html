@@ -21,7 +21,7 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col">
-      <button type="button" class="btn"  ngbTooltip="Create Humans">Setup</button>
+      <button type="button" class="btn"  ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
     </div>
     <div class="col">
       <span class="badge badge-info">{{title}}</span>
@@ -29,7 +29,12 @@
     </div>
   </div>
 <div class="row">
-  zona paint
+  <div class="col" id="containerP5"></div>
+</div>
+<div class="row">
+  <div class="col">
+    <button type="button" class="btn" ngbTooltip="One day" (click)="oneStep()" >step</button>
+  </div>
 </div>
 <div class="row">
   zona grafica
