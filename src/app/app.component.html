@@ -1,27 +1,7 @@
-<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e3f2fd;">
-  <a class="navbar-brand brand-custom" href="#">Angular Sass Example</a>
-  <form class="form-inline">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-      <button class="btn btn-outline-success search-button" type="submit">Search</button>
-  </form>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-              <a class="nav-link login-custom" href="#">Login <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-              <a class="nav-link register-custom" href="#">Register</a>
-          </li>
-      </ul>
-  </div>
-</nav>
-<div class="container-fluid">
+<div class="container">
   <div class="row">
     <div class="col">
-      <button type="button" class="btn"  ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
+      <button type="button" class="btn btn-primary"  ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
     </div>
     <div class="col">
       <span class="badge badge-info">{{title}}</span>
@@ -33,10 +13,13 @@
 </div>
 <div class="row">
   <div class="col">
-    <button type="button" class="btn" ngbTooltip="One day" (click)="oneStep()" >step</button>
+    <button type="button" class="btn  btn-primary" ngbTooltip="One day" (click)="oneStep()" >step</button>
   </div>
 </div>
 <div class="row">
-  zona grafica
+  <div class="col-8">
+    <canvas id="canvaschart">{{chart}}</canvas>
+  </div>
+
 </div>
 </div>

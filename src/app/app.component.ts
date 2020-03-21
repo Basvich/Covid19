@@ -1,7 +1,9 @@
 import {Component, OnInit} from '@angular/core';
-import { IHumanOpt, Human, HumanFactory, IInfectionOptions } from './su-vir/ihuman';
-import { Rectangle, Point, IDataPoint, KdTree } from './su-vir/kd-tree';
+import {IHumanOpt, Human, HumanFactory, IInfectionOptions} from './su-vir/ihuman';
+import {Rectangle, Point, IDataPoint, KdTree} from './su-vir/kd-tree';
 import * as p5 from 'p5';
+//import {Chart} from 'chart.js';
+import * as Chart from 'chart.js';
 
 
 interface IHumanPoint extends IDataPoint {
@@ -20,20 +22,24 @@ export class AppComponent implements OnInit {
   baseKd: KdTree;
   currentDay = 0;
 
-  public infectOp: IInfectionOptions={
+  public chart: Chart = null;
+  /** Elementos infecciosos */
+  public infecciosos = 0;
+
+  public infectOp: IInfectionOptions = {
     distanceBase: 4
   };
 
 
   public setupHumans() {
     const opt: IHumanOpt = {
-      zone: new Rectangle(0, 100, 0, 100)
+      zone: new Rectangle(0, 800, 0, 400)
     };
-    const hs = HumanFactory.create(100, opt); // HumanFactory.createTest(); // 
+    const hs = HumanFactory.create(2000, opt); // HumanFactory.createTest(); // 
     this.humans = hs.map((h) => ({data: h, point: h.position}));
     this.baseKd = KdTree.createFrom(this.humans);
     // this.baseKd.trace();
-    const all=this.baseKd.GetAll();
+    const all = this.baseKd.GetAll();
     const r = this.baseKd.root;
     const h0 = r.location.data as Human;
     h0.infect(0);
@@ -41,14 +47,17 @@ export class AppComponent implements OnInit {
   }
 
   public oneStep() {
+    this.currentDay++;
     this.checkHealth(this.currentDay);
     this.propagation();
     this.canvasP5.redraw();
-    this.currentDay++;
+    this.data2Chart();
   }
+
 
   ngOnInit(): void {
     this.setupP5();
+    this.initChart();
   }
 
 
@@ -100,22 +109,25 @@ export class AppComponent implements OnInit {
   /** Se realiza la propagación */
   protected propagation() {
     let newInfected: Human[] = null;
+    let totInfectados = 0;
     // Se recorren todos los elementos, mirando los que son 
     this.humans.forEach(element => {
       if (element.data.health.infectious) {
-        const prov= this.checkInfection(element);
-        if(prov && prov.length>0){
-          if(!newInfected){
-            newInfected=prov;
-          } else{
-            newInfected=newInfected.concat(prov);
-          }          
+        totInfectados++;
+        const prov = this.checkInfection(element);
+        if (prov && prov.length > 0) {
+          if (!newInfected) {
+            newInfected = prov;
+          } else {
+            newInfected = newInfected.concat(prov);
+          }
         }
       }
     });
-    if(newInfected && newInfected.length>0){
-      newInfected.forEach((ni)=>ni.infect(this.currentDay));
+    if (newInfected && newInfected.length > 0) {
+      newInfected.forEach((ni) => ni.infect(this.currentDay));
     }
+    this.infecciosos = totInfectados;
   }
 
   /** Se actualiza el estado de salud de cada individuo */
@@ -123,19 +135,64 @@ export class AppComponent implements OnInit {
 
   }
 
+  /** Obtiene la lista de nuevos infectados */
   protected checkInfection(human: IHumanPoint): Human[] {
     let res: Human[] = null;
-    const maxDist= this.infectOp.distanceBase*this.infectOp.distanceBase;
-    const zone: Rectangle=   Rectangle.fromRadius(human.point, maxDist); // new Rectangle(1,6,5,10);//
-    const candidates= this.baseKd.getInZone(zone);
-    if(!candidates || candidates.length===0) return res;
+    const maxDist = this.infectOp.distanceBase * this.infectOp.distanceBase;
+    const zone: Rectangle = Rectangle.fromRadius(human.point, maxDist); // new Rectangle(1,6,5,10);//
+    const candidates = this.baseKd.getInZone(zone);
+    if (!candidates || candidates.length === 0) return res;
     // Recorremos los candidatos a ver quien es infectable
-    candidates.forEach((c)=>{
-      const h: Human=c.data as Human;
-      if(!res) res=[];
+    candidates.forEach((c) => {
+      const h: Human = c.data as Human;
+      if (!res) res = [];
       res.push(h);
     });
     return res;
+  }
+
+  protected initChart() {
+    // const ctx = document.getElementById('canvaschart') as HTMLCanvasElement;
+    this.chart = new Chart('canvaschart', {
+      type: 'line',
+      data: {
+        datasets: [
+          {
+            label: 'test',
+            // fillColor : this.getRandomColor(),
+            data: [] as Chart.ChartPoint[],
+            fill: false
+          }
+        ]
+      },
+      options: {
+        legend: {
+          display: false
+        },
+        scales: {
+          xAxes: [
+            {
+              type: 'linear',
+              display: true
+            }
+          ],
+          yAxes: [
+            {
+              display: true
+            }
+          ]
+        },
+        showLines: true
+      }    
+    });
+  }
+
+  data2Chart() {
+    const nsam = {x: this.currentDay, y: this.infecciosos};
+    // const p: Chart.ChartPoint[] ;
+    (this.chart.data.datasets[0].data as Chart.ChartPoint[]).push(nsam);
+    // (this.chart.data.datasets[0].data as ChartPoint[])
+    this.chart.update();
   }
 
 
