@@ -1,7 +1,7 @@
 <div class="container">
   <div class="row">
     <div class="col">
-      <button type="button" class="btn"  ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
+      <button type="button" class="btn btn-primary"  ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
     </div>
     <div class="col">
       <span class="badge badge-info">{{title}}</span>
@@ -13,11 +13,11 @@
 </div>
 <div class="row">
   <div class="col">
-    <button type="button" class="btn" ngbTooltip="One day" (click)="oneStep()" >step</button>
+    <button type="button" class="btn  btn-primary" ngbTooltip="One day" (click)="oneStep()" >step</button>
   </div>
 </div>
 <div class="row">
-  <div class="col">
+  <div class="col-8">
     <canvas id="canvaschart">{{chart}}</canvas>
   </div>
 

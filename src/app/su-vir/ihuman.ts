@@ -7,23 +7,30 @@ export interface IInfectionOptions{
   distanceBase: number;
 }
 
+enum HStatus{
+  none= 0,
+  infected = 1<< 0,
+  infectious = 1<<1,
+  symptomatic = 1<<2,
+  death = 1<<3,
+  inmune = 1<<4
+}
+
 export interface IHealth {
   death: boolean;
+  
   infected: boolean;
   infectedSince?: number;
   /** Si es capaz de propagar la infccion */
   infectious?: boolean;
 }
 
-/* 
-export interface IHuman {
-  id: number;
-  pos?: IPosition;
-} */
-
 export class Human {
   position: Point;
+  private nextDay=10000;
   health: IHealth;
+  hstatus: HStatus=HStatus.none;
+
   public constructor(){
     this.health={
       death:false,
@@ -32,10 +39,19 @@ export class Human {
   }
 
   public infect(day){
-    this.health.infected=true;
-    this.health.infectious=true;
-    this.health.infectedSince=day;
+    if(this.hstatus) return;
+    this.hstatus=HStatus.infected;
   }
+
+
+  public changeStatus(day){
+    if(this.hstatus===HStatus.none){
+      this.hstatus=HStatus.infected;
+    }else{
+
+    }
+  }
+
 }
 
 export interface IHumanOpt {
@@ -80,6 +96,12 @@ export class HumanFactory {
   }
 }
 
+
+/** Si ocurre un suceso con probabilidad indicada (0,1] */
+function getSuccess(prob: number): boolean{
+  return Math.random()<prob;
+}
+
 function getRandom(min, max): number {
   return Math.random() * (max - min) + min;
 }
@@ -90,4 +112,12 @@ function getRandomInt(min, max): number {
 
 function getRndPos(rec: Rectangle): Point{
   return new Point(getRandom(rec.left,rec.right), getRandom(rec.bottom, rec.top));
+}
+
+/** Devuelve un dato con dsitrubción normal, usando  Box-Muller aproximación */
+function getRndNormal(mean: number,stdDev: number): number{
+   const u1=1.0 - Math.random();
+   const u2=1.0 - Math.random();
+   const randStdNormal=Math.sqrt(-2.0 * Math.log(u1))*Math.sign(2.0 * Math.PI * u2);
+   return mean+stdDev*randStdNormal;
 }

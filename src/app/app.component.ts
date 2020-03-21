@@ -2,7 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {IHumanOpt, Human, HumanFactory, IInfectionOptions} from './su-vir/ihuman';
 import {Rectangle, Point, IDataPoint, KdTree} from './su-vir/kd-tree';
 import * as p5 from 'p5';
-import {Chart} from 'chart.js';
+//import {Chart} from 'chart.js';
 import * as Chart from 'chart.js';
 
 
@@ -33,9 +33,9 @@ export class AppComponent implements OnInit {
 
   public setupHumans() {
     const opt: IHumanOpt = {
-      zone: new Rectangle(0, 200, 0, 200)
+      zone: new Rectangle(0, 800, 0, 400)
     };
-    const hs = HumanFactory.create(200, opt); // HumanFactory.createTest(); // 
+    const hs = HumanFactory.create(2000, opt); // HumanFactory.createTest(); // 
     this.humans = hs.map((h) => ({data: h, point: h.position}));
     this.baseKd = KdTree.createFrom(this.humans);
     // this.baseKd.trace();
@@ -189,8 +189,8 @@ export class AppComponent implements OnInit {
 
   data2Chart() {
     const nsam = {x: this.currentDay, y: this.infecciosos};
-    const p: Chart.ChartPoint[] ;
-    this.chart.data.datasets[0].data.push(nsam);
+    // const p: Chart.ChartPoint[] ;
+    (this.chart.data.datasets[0].data as Chart.ChartPoint[]).push(nsam);
     // (this.chart.data.datasets[0].data as ChartPoint[])
     this.chart.update();
   }
