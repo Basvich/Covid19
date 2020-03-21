@@ -69,6 +69,10 @@ export class Rectangle {
     return this.top;
   }
 
+  public area(): number{
+    return (this.right-this.left)*(this.top-this.bottom);
+  }
+
 }
 
 export interface IDataPoint {

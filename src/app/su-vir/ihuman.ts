@@ -1,55 +1,74 @@
 import { IPosition, Rectangle, Point } from './kd-tree';
 
 
+export interface INormalDist{
+  mean: number;
+  stdDev: number;
+}
+
+export interface IInfectionHuman{
+  /** duracion del periodo de incubación */
+  incubation: INormalDist;
+  /** Probabilidad de tener sintomas */
+  sintomatic: number;
+  /** Duracion desde la infección hasta la curación */
+  infectionPeriod: INormalDist;
+}
 
 export interface IInfectionOptions{
   /** distancia minima a partir de la cual el contagio es directamente la probabilidad */
   distanceBase: number;
+  /** Probabilidad de contagio a la minima distancia o inferior */
+  contagiousProb: number;
+  humanData: IInfectionHuman;
 }
 
-enum HStatus{
+export enum HStatus{
   none= 0,
   infected = 1<< 0,
-  infectious = 1<<1,
-  symptomatic = 1<<2,
-  death = 1<<3,
-  inmune = 1<<4
+  incubation = 1<<1,
+  infectious = 1<<2,
+  symptomatic = 1<<3,
+  death = 1<<4,
+  inmune = 1<<5
 }
 
-export interface IHealth {
-  death: boolean;
-  
-  infected: boolean;
-  infectedSince?: number;
-  /** Si es capaz de propagar la infccion */
-  infectious?: boolean;
-}
 
 export class Human {
   position: Point;
-  private nextDay=10000;
-  health: IHealth;
+  private nextDay=10000; 
   hstatus: HStatus=HStatus.none;
+  endIncubationDay: number;
+  endInfectionDay: number;
 
   public constructor(){
-    this.health={
-      death:false,
-      infected:false
-    };
+    
   }
 
-  public infect(day){
+  public infect(currentDay: number, opt: IInfectionHuman ){
     if(this.hstatus) return;
-    this.hstatus=HStatus.infected;
+    this.hstatus=HStatus.infected | HStatus.incubation;
+    this.endIncubationDay=currentDay+getRndNormalDist(opt.incubation);
+    this.endInfectionDay=currentDay+getRndNormalDist(opt.infectionPeriod);
   }
 
 
-  public changeStatus(day){
-    if(this.hstatus===HStatus.none){
-      this.hstatus=HStatus.infected;
-    }else{
-
-    }
+  public checkStatus(currentDay: number, opt: IInfectionHuman){
+   if(!this.hstatus) return;
+   if((this.hstatus & HStatus.inmune) || (this.hstatus & HStatus.death)) return;
+   if(this.hstatus & HStatus.infected){
+     if(this.hstatus & HStatus.incubation){
+       if(currentDay>=this.endIncubationDay){
+         this.hstatus &= ~HStatus.incubation;
+         this.hstatus |= HStatus.infectious;
+       }
+       return;
+     } else{
+       if(currentDay>=this.endInfectionDay){
+         this.hstatus=HStatus.inmune;
+       }
+     }
+   }
   }
 
 }
@@ -112,6 +131,10 @@ function getRandomInt(min, max): number {
 
 function getRndPos(rec: Rectangle): Point{
   return new Point(getRandom(rec.left,rec.right), getRandom(rec.bottom, rec.top));
+}
+
+function getRndNormalDist(dat: INormalDist): number{
+  return getRndNormal(dat.mean, dat.stdDev);
 }
 
 /** Devuelve un dato con dsitrubción normal, usando  Box-Muller aproximación */

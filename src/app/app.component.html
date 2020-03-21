@@ -1,6 +1,9 @@
 <div class="container">
   <div class="row">
     <div class="col">
+      <input type="number" min="0" max="16" step="0.5" value="{{infectOp.distanceBase}}"> 
+    </div>
+    <div class="col">
       <button type="button" class="btn btn-primary"  ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
     </div>
     <div class="col">
@@ -14,6 +17,7 @@
 <div class="row">
   <div class="col">
     <button type="button" class="btn  btn-primary" ngbTooltip="One day" (click)="oneStep()" >step</button>
+    <button type="button" class="btn  btn-primary" ngbTooltip="Five day" (click)="multStep(5)" >5 step</button>
   </div>
 </div>
 <div class="row">

@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
-import {IHumanOpt, Human, HumanFactory, IInfectionOptions} from './su-vir/ihuman';
-import {Rectangle, Point, IDataPoint, KdTree} from './su-vir/kd-tree';
+import { IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus } from './su-vir/ihuman';
+import { Rectangle, Point, IDataPoint, KdTree } from './su-vir/kd-tree';
 import * as p5 from 'p5';
 //import {Chart} from 'chart.js';
 import * as Chart from 'chart.js';
@@ -16,42 +16,53 @@ interface IHumanPoint extends IDataPoint {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
+  readonly populationNumber=4000;
   private canvasP5: p5;
   title = 'covid19';
   humans: IHumanPoint[];
   baseKd: KdTree;
   currentDay = 0;
+  mediumDistance: number;
 
   public chart: Chart = null;
   /** Elementos infecciosos */
   public infecciosos = 0;
 
   public infectOp: IInfectionOptions = {
-    distanceBase: 4
+    distanceBase: 4,
+    contagiousProb: 0.5,
+    humanData:{
+      incubation:{mean:3, stdDev:1.0},
+      sintomatic: 0.5,
+      infectionPeriod:{mean:10, stdDev:3}
+    }
   };
-
 
   public setupHumans() {
     const opt: IHumanOpt = {
       zone: new Rectangle(0, 800, 0, 400)
     };
-    const hs = HumanFactory.create(2000, opt); // HumanFactory.createTest(); // 
+    const hs = HumanFactory.create(this.populationNumber, opt); // HumanFactory.createTest(); // 
     this.humans = hs.map((h) => ({data: h, point: h.position}));
     this.baseKd = KdTree.createFrom(this.humans);
     // this.baseKd.trace();
     const all = this.baseKd.GetAll();
     const r = this.baseKd.root;
     const h0 = r.location.data as Human;
-    h0.infect(0);
+    h0.infect(0, this.infectOp.humanData);
     this.canvasP5.redraw();
   }
 
   public oneStep() {
     this.currentDay++;
-    this.checkHealth(this.currentDay);
+    this.checkHealth();
     this.propagation();
     this.canvasP5.redraw();
     this.data2Chart();
+  }
+
+  public multStep(nDays){
+    for(let i=0; i< nDays; i++) this.oneStep();
   }
 
 
@@ -73,7 +84,7 @@ export class AppComponent implements OnInit {
 
   protected drawHumans() {
     if (!this.humans) return;
-    this.canvasP5.strokeWeight(3);
+    this.canvasP5.strokeWeight(2);
     this.humans.forEach((h) => {
       const color = this.colorFromHumanStatus(h.data);
       this.canvasP5.stroke(color);
@@ -82,9 +93,12 @@ export class AppComponent implements OnInit {
   }
 
   protected colorFromHumanStatus(h: Human) {
-    if (h.health.infected) {
-      return [255, 0, 0, 255];
+    if(!h.hstatus) return [127,127,127,255];
+    if(h.hstatus & HStatus.infected){
+      if(h.hstatus & HStatus.infectious) return [255, 0, 0, 255];
+      return [255,153,51,255];
     }
+    if(h.hstatus===HStatus.inmune) return [0,255,0,255];
     return [0, 255, 0, 255];
   }
 
@@ -109,11 +123,12 @@ export class AppComponent implements OnInit {
   /** Se realiza la propagación */
   protected propagation() {
     let newInfected: Human[] = null;
-    let totInfectados = 0;
-    // Se recorren todos los elementos, mirando los que son 
+    let totinfectious = 0;
+    // Se recorren todos los elementos, mirando los que son infecciosos
     this.humans.forEach(element => {
-      if (element.data.health.infectious) {
-        totInfectados++;
+      if(!element.data.hstatus) return;
+      if (element.data.hstatus & HStatus.infectious) {
+        totinfectious++;
         const prov = this.checkInfection(element);
         if (prov && prov.length > 0) {
           if (!newInfected) {
@@ -125,14 +140,16 @@ export class AppComponent implements OnInit {
       }
     });
     if (newInfected && newInfected.length > 0) {
-      newInfected.forEach((ni) => ni.infect(this.currentDay));
+      newInfected.forEach((ni) => ni.infect(this.currentDay, this.infectOp.humanData));
     }
-    this.infecciosos = totInfectados;
+    this.infecciosos = totinfectious;
   }
 
   /** Se actualiza el estado de salud de cada individuo */
-  protected checkHealth(day: number) {
-
+  protected checkHealth() {
+     for(const human of this.humans){
+       human.data.checkStatus(this.currentDay, this.infectOp.humanData);
+     }
   }
 
   /** Obtiene la lista de nuevos infectados */
