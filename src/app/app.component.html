@@ -20,8 +20,9 @@
             <div class="input-group-prepend">
               <span class="input-group-text">Prob contagio</span>
             </div>
-            <input type="number" min="0" max="1" step="0.2" value="{{infectOp.contagiousProb}}">
+            <input [ngModel]="infectOp.contagiousProb" (ngModelChange)="infectOp.contagiousProb=$event" type="number" min="0" max="1" step="0.2"  >
           </div>
+          <span>{{infectOp.contagiousProb}}</span>
           <div class="input-group input-group-sm" ngbTooltip="Periodo medio incubacion en días.">
             <div class="input-group-prepend">
               <span class="input-group-text">incubación</span>
