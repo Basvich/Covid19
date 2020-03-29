@@ -43,17 +43,20 @@ export class Human {
   endIncubationDay: number;
   endInfectionDay: number;
   willDie: boolean;
+  howManyInfect=0; // A cuantos infecto
 
   public constructor() {
 
   }
 
-  public infect(currentDay: number, opt: IInfectionHuman) {
-    if (this.hstatus) return;
+  /** infecta un humando */
+  public infect(currentDay: number, opt: IInfectionHuman): boolean {
+    if (this.hstatus) return false;
     this.hstatus = HStatus.infected | HStatus.incubation;
     this.endIncubationDay = currentDay + getRndNormalDist(opt.incubation);
-    this.endInfectionDay = currentDay + getRndNormalDist(opt.infectionPeriod);
+    this.endInfectionDay = this.endIncubationDay + getRndNormalDist(opt.infectionPeriod);
     this.willDie = getSuccess(opt.lethality);
+    return true;
   }
 
   /** Cada persona cambia su estado de salud */
