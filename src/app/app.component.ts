@@ -4,6 +4,7 @@ import {Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition} from './su
 import * as p5 from 'p5';
 // import {Chart} from 'chart.js';
 import * as Chart from 'chart.js';
+import {MediumWindow} from './su-vir/utils';
 
 
 interface IHumanPoint extends IDataPoint {
@@ -24,6 +25,7 @@ export class AppComponent implements OnInit {
   currentDay = 0;
   mediumDistance: number;
   sqrDistanceBase: number;
+  R0Medium=new MediumWindow(4);
 
   public chart: Chart = null;
   /** Elementos infecciosos */
@@ -97,7 +99,7 @@ export class AppComponent implements OnInit {
   protected draw() {
     this.canvasP5.background(250);
     this.drawHumans();
-    const maxDist = 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
+    const maxDist = this.infectOp.contagiousProb* 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
     this.canvasP5.rect(100, 100, maxDist * 2, maxDist * 2);
     /* this.canvasP5.line(this.centerPos, 0, this.centerPos, 400);
     this.canvasP5.line(0, 350, 600, 350);
@@ -147,42 +149,25 @@ export class AppComponent implements OnInit {
 
   /** Se realiza la propagación */
   protected propagation() {
-    let newInfected: Human[] = null;
-    let countInfectiosous = 0;
-    // Se recorren todos los elementos, mirando los que son infecciosos
-    this.humans.forEach(element => {
-      if (!element.data.hstatus) return;
-      if (element.data.hstatus & HStatus.infectious) {
-        countInfectiosous++;
-        const prov = this.checkInfection(element);
-        if (prov && prov.length > 0) {
-          if (!newInfected) {
-            newInfected = prov;
-          } else {
-            newInfected = newInfected.concat(prov);
-          }
-        }
+    // Los que son infecciosos
+    const contagiosous= this.humans.filter( e => e.data.hstatus & HStatus.infectious);
+    // Los que serán infectados
+    const nuevosContagiados=contagiosous.reduce( (acc: Human[], element) => {
+      const prov = this.checkInfection(element);
+      if(prov && prov.length > 0){
+        const prov2=prov.filter((hh)=>acc.indexOf(hh)<0); // Filtramos duplicados
+        acc=acc.concat(prov2) ;
       }
-    });
-    if (newInfected && newInfected.length > 0) {
-      let realNewInfected = 0;  // Cuenta de nuevos infectados (hay elementos repetidos en el array)
-      newInfected.forEach((ni) => {
-        if (ni.infect(this.currentDay, this.infectOp.humanData)) realNewInfected++;
-        }
-      );
-      this.newInfecteds = realNewInfected;
-    } else {
-      this.newInfecteds = 0;
-    }
-    const mInfect = this.newInfecteds / countInfectiosous;
-
-    // Repartimos entre todos los infecciosos los nuevos infectados, y calculamos R0
-    let totalGroupHasInfectd = 0;
-    for (const h of this.humans) {
-      if (!(h.data.hstatus & HStatus.infectious)) continue;
-      totalGroupHasInfectd += (h.data.howManyInfect += mInfect);
-    }
-    this.R0 = countInfectiosous ? totalGroupHasInfectd / countInfectiosous : 0;
+      return acc;
+    }, []);
+    // Ya tenemos la cuenta de nuevos infectados y la lista de contagiosos.
+    // Como usamos medias, directamente culpamos al primero de los contagiosos de los nuevos contagiados (no nos importa el detalle)
+    if(contagiosous.length>0) contagiosous[0].data.howManyInfect+=nuevosContagiados.length;
+    // Obtenemos la cuenta de a cuantos contagiaron los contagiosos hasta ahora
+    const infectaron=contagiosous.reduce((acc, element)=> acc+=element.data.howManyInfect, 0);
+    this.R0= this.R0Medium.add(contagiosous.length>0 ? infectaron/contagiosous.length : 0);
+    // Cambiamos el estado a los nuevos contagiados
+    nuevosContagiados.forEach((el)=>el.infect(this.currentDay, this.infectOp.humanData));
   }
 
   /** Se actualiza el estado de salud de cada individuo */
@@ -220,7 +205,7 @@ export class AppComponent implements OnInit {
   /** Obtiene la lista de nuevos infectados. NO los infecta */
   protected checkInfection(fromHuman: IHumanPoint): Human[] {
     let res: Human[] = null;
-    const maxDist = 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
+    const maxDist = this.infectOp.contagiousProb* 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
     const numProb = this.sqrDistanceBase * this.infectOp.contagiousProb;
     const zone: Rectangle = Rectangle.fromRadius(fromHuman.point, maxDist);
     const candidates = this.baseKd.getInZone(zone);

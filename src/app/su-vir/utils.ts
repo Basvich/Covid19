@@ -56,3 +56,33 @@ export function simpleSerialMachine<T>(
   };
   return miDataInStep;
 }
+
+/** va devolviendo la media de los ultimos numDatas values, por */
+export class MediumWindow{
+  values: number[];
+  numData=0;
+  pointer=0;
+  total=0;
+  medium=0;
+
+
+  constructor(public numDatas: number){
+    if(numDatas<=0) throw new Error('Invalid lenght');
+    this.values=new Array<number>(numDatas);
+    for(let i=0; i<numDatas; i++) this.values[i]=0;
+  }
+
+  public add(n: number): number{
+    const old=this.values[this.pointer];
+    this.total-=old;
+    this.total+=n;
+    this.medium=this.total/this.values.length;
+    this.values[this.pointer]=n;
+    this.pointer++;
+    if(this.pointer>=this.values.length) this.pointer=0;
+    return this.medium;
+  }
+
+  public getMedium(){ return this.medium; }
+
+}
