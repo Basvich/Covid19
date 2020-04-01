@@ -2,7 +2,6 @@ import {Component, OnInit} from '@angular/core';
 import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess} from './su-vir/ihuman';
 import {Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition} from './su-vir/kd-tree';
 import * as p5 from 'p5';
-// import {Chart} from 'chart.js';
 import * as Chart from 'chart.js';
 import {MediumWindow} from './su-vir/utils';
 
@@ -69,10 +68,13 @@ export class AppComponent implements OnInit {
     this.humans = hs.map((h) => ({data: h, point: h.position}));
     this.baseKd = KdTree.createFrom(this.humans);
     // this.baseKd.trace();
+    (this.chart.data.datasets[0].data as Chart.ChartPoint[]).length=0;
     const r = this.baseKd.root;
+    // Infectamos los 3 primeros
     inf(r);
     inf(r.left);
     inf(r.right);
+    this.chart.clear();
     this.canvasP5.redraw();
   }
 
@@ -287,6 +289,11 @@ export class AppComponent implements OnInit {
     /* const nsam2 = {x: this.currentDay, y: 100 * this.noAfectados / this.populationNumber};
     (this.chart.data.datasets[1].data as Chart.ChartPoint[]).push(nsam2); */
     this.chart.update();
+  }
+
+  /** Repite los nodos cercanos a un limite en el kdTree, para que se puedan encontrar en el contrario */
+  protected mirrorSpace(){
+    
   }
 
 
