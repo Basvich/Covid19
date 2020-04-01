@@ -1,5 +1,5 @@
 import {ReturnStatement} from '@angular/compiler';
-import {create} from './ihuman';
+
 
 export interface IPosition {
   x: number;
@@ -67,6 +67,10 @@ export class Rectangle {
   public maxAxis(d: number) {
     if (d === 0) return this.right;
     return this.top;
+  }
+
+  public area(): number{
+    return (this.right-this.left)*(this.top-this.bottom);
   }
 
 }
@@ -167,18 +171,24 @@ export class KdTree {
   }
 
   protected static kdTree(points: IDataPoint[], depth: number): INodeKdTree {
-    if (!points || !depth) return null;
-    const kdtree = new KdTree();
+    if (!points || points.length === 0) return null;
+    
     const axis = depth % this.K;
-    points.sort((p1, p2) => Math.sign(KdTree.axisValue(p1.point, axis) - KdTree.axisValue(p2.point, axis)));
-    const medianIndex = points.length / 2;
+    const sortedPoints: IDataPoint[] = points.sort((p1, p2) =>
+      Math.sign(KdTree.axisValue(p1.point, axis) - KdTree.axisValue(p2.point, axis))
+    );
+    const medianIndex = Math.floor(sortedPoints.length / 2);
     const node: INodeKdTree = {
-      location: points[medianIndex]
+      location: sortedPoints[medianIndex]
     };
     let ln = medianIndex;
-    if (ln > 0) node.left = KdTree.kdTree(points.slice(0, ln), depth + 1);
+    if (ln > 0) node.left = KdTree.kdTree(sortedPoints.slice(0, ln), depth + 1);
     ln = points.length - medianIndex - 1;
-    if (ln > 0) node.right = KdTree.kdTree(points.slice(medianIndex + 1), depth + 1);
+    if (ln > 0) node.right = KdTree.kdTree(sortedPoints.slice(medianIndex + 1), depth + 1);
+    if (!node.location) {
+      console.log("HAYYY");
+    }
+    console.assert(!!(node.location), "NODO sin LOCATION")
     return node;
   }
 
@@ -190,6 +200,7 @@ export class KdTree {
       addtn(n.left);
       addtn(n.right);
     };
+    addtn(this.root);
     return res;
   }
 
@@ -211,35 +222,63 @@ export class KdTree {
     return res;
   }
 
-  protected getInZone(zone: Rectangle, node: INodeKdTree, depth: number, currents: IDataPoint[]): IDataPoint[] {
+  public getInZone(zone: Rectangle, node: INodeKdTree = this.root, depth: number = 0, currents: IDataPoint[] = null): IDataPoint[] {
     let res = currents;
     if (!node) return currents;
     const axis = depth % KdTree.K;
+    // console.debug(`node en: [${node.location.point.x}, ${node.location.point.y}]  depth:${depth}`);
     if (zone.fullContains(node.location.point)) {
+      //console.debug('Punto en zona');
       if (!res) res = [];
       res.push(node.location);
     }
     if (node.left) {
-      if (zone.minAxis(axis) < KdTree.axisValue(node.location.point, axis)) res = this.getInZone(zone, node.left, depth + 1, res);
+      // console.debug(`left minAxis:${zone.minAxis(axis)} node:${KdTree.axisValue(node.location.point, axis)}`);
+      if (zone.minAxis(axis) <= KdTree.axisValue(node.location.point, axis)) {
+        res = this.getInZone(zone, node.left, depth + 1, res);
+      }
     }
     if (node.right) {
-      if (zone.minAxis(axis) >= KdTree.axisValue(node.location.point, axis)) res = this.getInZone(zone, node.right, depth + 1, res);
+      // console.debug(`right maxAxis:${zone.maxAxis(axis)} node:${KdTree.axisValue(node.location.point, axis)}`);
+      if (zone.maxAxis(axis) >= KdTree.axisValue(node.location.point, axis)) {
+        res = this.getInZone(zone, node.right, depth + 1, res);
+      }
     }
+    return res;
+  }
+
+  /** Se añade un nuevo nodo. Como se añade siempre al final, puede resultar no balanceado */
+  public insert(newData: IDataPoint, root: INodeKdTree = this.root, depth=0): INodeKdTree {
+    if(!root){
+      return {location:newData};
+    }
+    const axis = depth % KdTree.K;
+    if(KdTree.axisValue(newData.point, axis)<KdTree.axisValue(root.location.point, axis)){
+      root.left = this.insert(newData, root.left, depth + 1);
+    }else{
+      root.right = this.insert(newData, root.right, depth + 1);
+    }
+    return root;
+   }
+
+  public trace(){
+    this.traceNode(this.root, 0);
   }
 
   protected traceNode(node: INodeKdTree, depth: number) {
     if (!node) return;
     const axis = depth % KdTree.K;
     const saxis = axis ? 'y' : 'x';
-    console.debug(`${saxis}=${KdTree.axisValue(node.location.point, axis)}  point:${node.location}`);
+    console.log(`NODO depth:${depth} axis ${saxis}=${KdTree.axisValue(node.location.point, axis)}  point: [${node.location.point.x}, ${node.location.point.y}]`);
+    
     if (node.left) {
-      console.debug('Left:');
+      console.log('Left:');
       console.group();
       this.traceNode(node.left, depth + 1);
       console.groupEnd();
     }
     if (node.right) {
-      console.debug('Right:');
+      console.log('Right:');
       console.group();
       this.traceNode(node.right, depth + 1);
       console.groupEnd();

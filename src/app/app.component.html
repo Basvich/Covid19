@@ -1,37 +1,81 @@
-<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #e3f2fd;">
-  <a class="navbar-brand brand-custom" href="#">Angular Sass Example</a>
-  <form class="form-inline">
-      <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-      <button class="btn btn-outline-success search-button" type="submit">Search</button>
-  </form>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-              <a class="nav-link login-custom" href="#">Login <span class="sr-only">(current)</span></a>
-          </li>
-          <li class="nav-item">
-              <a class="nav-link register-custom" href="#">Register</a>
-          </li>
-      </ul>
+<div class="container">
+  <div class="row">
+    <div class="col" id="optionsCol">
+      <div class="row">
+        <div class="col-2">
+          <span class="badge badge-info">{{mediumDistance | number:'0.0-1' }}</span>
+        </div>
+        <div class="col-10">
+          <div class="input-group input-group-sm">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Min distancia</span>
+            </div>
+            <input type="number" min="0" max="16" step="0.25"  [ngModel]="infectOp.distanceBase" (ngModelChange)="setistanceBase($event)">
+          </div>
+
+        </div>        
+      </div>
+      <div class="row">
+        <div class="col-10">
+          <div class="input-group input-group-sm" ngbTooltip="Probabilidad contagio minima distancia">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Prob contagio</span>
+            </div>
+            <input [ngModel]="infectOp.contagiousProb" (ngModelChange)="infectOp.contagiousProb=$event" type="number" min="0" max="1" step="0.2"  >
+          </div>
+          <div class="input-group input-group-sm" ngbTooltip="Periodo medio incubacion en días.">
+            <div class="input-group-prepend">
+              <span class="input-group-text">incubación</span>
+            </div>
+            <input type="number" min="1" max="6" step="0.5" [(ngModel)]="infectOp.humanData.incubation.mean">
+          </div>
+          <div class="input-group input-group-sm" ngbTooltip="Periodo medio infeccioso en días después incubación">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Infeccioso</span>
+            </div>
+            <input type="number" min="1" max="16" step="0.5" [(ngModel)]="infectOp.humanData.infectionPeriod.mean">
+          </div>
+          <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren (tanto x 1)">
+            <div class="input-group-prepend">
+              <span class="input-group-text">Mortalidad</span>
+            </div>
+            <input type="number" min="0" max="1" step="0.05" [(ngModel)]="infectOp.humanData.lethality">
+          </div>
+        </div>     
+      </div>
+      <div class="row">
+        <div class="col">
+          <button type="button" class="btn btn-primary" ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="row">
+        <div class="col" id="containerP5"></div>
+      </div>
+    </div>
   </div>
-</nav>
-<div class="container-fluid">
   <div class="row">
     <div class="col">
-      <button type="button" class="btn"  ngbTooltip="Create Humans">Setup</button>
-    </div>
-    <div class="col">
-      <span class="badge badge-info">{{title}}</span>
-      <input type="number" #filterVel min="-2" max="2" step="0.2" value="0"/>      
+      <button type="button" class="btn  btn-primary" ngbTooltip="One day" (click)="oneStep()">step</button>
+      <button type="button" class="btn  btn-primary" ngbTooltip="Five day" (click)="multStep(5)">5 step</button>
     </div>
   </div>
-<div class="row">
-  zona paint
-</div>
-<div class="row">
-  zona grafica
-</div>
+  <div class="row">
+    <div class="col-10">
+      <canvas id="canvaschart">{{chart}}</canvas>
+    </div>
+    <div class="col-2">
+
+        <dl class="row">
+          <dt class="col-6" align=right>R0</dt> <dd class="col-6"><span class="badge badge-danger">{{R0 | number:'1.2-2'}}</span></dd>
+          <dt class="col-6">infecciosos</dt> <dd class="col-6"><span class="badge badge-danger">{{infecciosos/populationNumber | percent}}</span></dd>
+          <dt class="col-6">afectados</dt> <dd class="col-6"><span class="badge badge-danger">{{afectados/populationNumber | percent}}</span></dd>
+          <dt class="col-8">Fallecidos</dt>   <dd class="col-4">{{death/afectados | percent}}</dd>
+          <dt class="col-8">Inmunes</dt>   <dd class="col-4">Value</dd>
+        </dl>
+
+    </div>
+
+  </div>
 </div>
