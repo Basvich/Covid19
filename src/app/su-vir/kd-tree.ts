@@ -247,6 +247,20 @@ export class KdTree {
     return res;
   }
 
+  /** Se añade un nuevo nodo. Como se añade siempre al final, puede resultar no balanceado */
+  public insert(newData: IDataPoint, root: INodeKdTree = this.root, depth=0): INodeKdTree {
+    if(!root){
+      return {location:newData};
+    }
+    const axis = depth % KdTree.K;
+    if(KdTree.axisValue(newData.point, axis)<KdTree.axisValue(root.location.point, axis)){
+      root.left = this.insert(newData, root.left, depth + 1);
+    }else{
+      root.right = this.insert(newData, root.right, depth + 1);
+    }
+    return root;
+   }
+
   public trace(){
     this.traceNode(this.root, 0);
   }
