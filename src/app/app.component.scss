@@ -1,31 +1,31 @@
-$backColor: brown;
+$deadcolor:DimGray;
+$normalColor:	lightgray;
 
-.search-button {
-    border-color: skyblue;
-    color: blue;
+$theme-colors: (
+  "death": $deadcolor,
+  "normal": $normalColor
+);
 
-    &:hover, &:after, &:focus {
-        background-color: transparent;
-        color: $backColor;
-    }
-}
-.brand-custom {
-    &:hover, &:focus, &:active {
-        background-color: transparent;
-        color:$backColor;
-    }
+@import "node_modules/bootstrap/scss/bootstrap";
+
+.dt-label{
+  text-align: right;
+  @extend .font-weight-normal;
 }
 
-.login-custom {
-    &:hover, &:focus, &:active {
-        background-color: transparent;
-        color:$backColor !important;
-    }
+.dd-value{
+  text-align: left;
+  padding: 2px;
 }
 
-.register-custom {
-    &:hover, &:focus, &:active {
-        background-color: transparent;
-        color:$backColor !important;
-    }
-}
+/* .badge-deadth {
+    color: #fff;
+    background-color: $deadcolor;
+}; */
+
+/*dt  {  
+  font-weight: $font-weight-normal; 
+}*/
+
+
+

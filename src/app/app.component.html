@@ -1,51 +1,60 @@
 <div class="container">
   <div class="row">
     <div class="col" id="optionsCol">
-      <div class="row">
-        <div class="col-2">
-          <span class="badge badge-info">{{mediumDistance | number:'0.0-1' }}</span>
-        </div>
-        <div class="col-10">
-          <div class="input-group input-group-sm">
-            <div class="input-group-prepend">
-              <span class="input-group-text">Min distancia</span>
-            </div>
-            <input type="number" min="0" max="16" step="0.25"  [ngModel]="infectOp.distanceBase" (ngModelChange)="setistanceBase($event)">
-          </div>
-
-        </div>        
-      </div>
-      <div class="row">
-        <div class="col-10">
-          <div class="input-group input-group-sm" ngbTooltip="Probabilidad contagio minima distancia">
-            <div class="input-group-prepend">
-              <span class="input-group-text">Prob contagio</span>
-            </div>
-            <input [ngModel]="infectOp.contagiousProb" (ngModelChange)="infectOp.contagiousProb=$event" type="number" min="0" max="1" step="0.2"  >
-          </div>
-          <div class="input-group input-group-sm" ngbTooltip="Periodo medio incubacion en días.">
-            <div class="input-group-prepend">
-              <span class="input-group-text">incubación</span>
-            </div>
-            <input type="number" min="1" max="6" step="0.5" [(ngModel)]="infectOp.humanData.incubation.mean">
-          </div>
-          <div class="input-group input-group-sm" ngbTooltip="Periodo medio infeccioso en días después incubación">
-            <div class="input-group-prepend">
-              <span class="input-group-text">Infeccioso</span>
-            </div>
-            <input type="number" min="1" max="16" step="0.5" [(ngModel)]="infectOp.humanData.infectionPeriod.mean">
-          </div>
-          <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren (tanto x 1)">
-            <div class="input-group-prepend">
-              <span class="input-group-text">Mortalidad</span>
-            </div>
-            <input type="number" min="0" max="1" step="0.05" [(ngModel)]="infectOp.humanData.lethality">
-          </div>
-        </div>     
-      </div>
-      <div class="row">
-        <div class="col">
-          <button type="button" class="btn btn-primary" ngbTooltip="Create Humans" (click)="setupHumans()">Setup</button>
+      <div class="card width: 100%">
+        <div class="card-header text-center">Parámetros</div>
+        <div class="card-body width: 100%">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Min distancia</span>
+                </div>
+                <input type="number" min="0" max="16" step="0.25" [ngModel]="infectOp.distanceBase" (ngModelChange)="setistanceBase($event)">
+              </div>              
+            </li>
+            <li class="list-group-item">
+              <div class="input-group input-group-sm" ngbTooltip="Probabilidad contagio minima distancia">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Prob contagio</span>
+                </div>
+                <input [ngModel]="infectOp.contagiousProb" (ngModelChange)="infectOp.contagiousProb=$event" type="number" min="0" max="1" step="0.2">
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="input-group input-group-sm" ngbTooltip="Periodo medio incubacion en días.">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">incubación</span>
+                </div>
+                <input type="number" min="1" max="6" step="0.5" [(ngModel)]="infectOp.humanData.incubation.mean">
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="input-group input-group-sm" ngbTooltip="Periodo medio infeccioso en días después incubación">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Infeccioso</span>
+                </div>
+                <input type="number" min="1" max="16" step="0.5" [(ngModel)]="infectOp.humanData.infectionPeriod.mean">
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren (tanto x 1)">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Mortalidad</span>
+                </div>
+                <input type="number" min="0" max="1" step="0.05" [(ngModel)]="infectOp.humanData.lethality">
+              </div>
+            </li>
+            <li class="list-group-item">
+              <div class="input-group input-group-sm" ngbTooltip="Porcentaje de inmunes inicialmente  (tanto x 1)">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">Inmunes</span>
+                </div>
+                <input type="number" min="0" max="0.9" step="0.1" [(ngModel)]="initialInmunes">
+              </div>
+            </li>
+          </ul>          
+            <button type="button" class="btn btn-block btn-primary" ngbTooltip="Borra y vuelve a emprezar" (click)="setupHumans()">Reiniciar</button>          
         </div>
       </div>
     </div>
@@ -53,29 +62,54 @@
       <div class="row">
         <div class="col" id="containerP5"></div>
       </div>
+      <div class="row">
+        <div class="col">
+          <ul class="list-inline">
+            <li  class="list-inline-item"><span class="badge badge-pill badge-normal">Normales</span></li> 
+            <li  class="list-inline-item"><span class="badge badge-pill badge-warning" ngbTooltip="Contagiados pero no contagiosos">Incubando</span></li> 
+            <li  class="list-inline-item"><span class="badge badge-pill badge-danger" ngbTooltip="Pueden contagiar a los demás">Infecciosos</span></li> 
+            <li  class="list-inline-item"><span class="badge badge-pill badge-success" ngbTooltip="Pasaron la infección y/o son inmunes">Inmunes</span></li> 
+            <li  class="list-inline-item"><span class="badge badge-pill badge-death" ngbTooltip="Fallecidos">Fallecidos</span></li> 
+          </ul>  
+        </div>
+      </div>
     </div>
   </div>
-  <div class="row">
-    <div class="col">
-      <button type="button" class="btn  btn-primary" ngbTooltip="One day" (click)="oneStep()">step</button>
-      <button type="button" class="btn  btn-primary" ngbTooltip="Five day" (click)="multStep(5)">5 step</button>
-    </div>
-  </div>
+
   <div class="row">
     <div class="col-10">
-      <canvas id="canvaschart">{{chart}}</canvas>
+      <div class="row">
+        <canvas id="canvaschart" height="100">{{chart}}</canvas>
+      </div>
     </div>
     <div class="col-2">
-
+      <div class="row">
+        <div class="col text-center">
+          <button type="button" class="btn btn-sm  btn-primary" ngbTooltip="1 único paso" (click)="oneStep()">1 paso</button>          
+        </div>
+        <div class="col text-center">
+          <button type="button" class="btn btn-sm btn-secondary" ngbTooltip="5 pasos seguidos" (click)="multStep(5)">5 pasos</button>
+        </div>
+      </div>
+      <div class="col">
         <dl class="row">
-          <dt class="col-6" align=right>R0</dt> <dd class="col-6"><span class="badge badge-danger">{{R0 | number:'1.2-2'}}</span></dd>
-          <dt class="col-6">infecciosos</dt> <dd class="col-6"><span class="badge badge-danger">{{infecciosos/populationNumber | percent}}</span></dd>
-          <dt class="col-6">afectados</dt> <dd class="col-6"><span class="badge badge-danger">{{afectados/populationNumber | percent}}</span></dd>
-          <dt class="col-8">Fallecidos</dt>   <dd class="col-4">{{death/afectados | percent}}</dd>
-          <dt class="col-8">Inmunes</dt>   <dd class="col-4">Value</dd>
+          <dt class="col-8 dt-label" ngbTooltip="Distancia media actual">Distancia</dt>
+          <dd class="col-4 dd-value"><span class="badge badge-info dt-value">{{mediumDistance | number:'0.0-1' }}</span></dd>
+          <dt class="col-8 dt-label" ngbTooltip="Cuantos infecta cada infectado">R0</dt>
+          <dd class="col-4 dd-value" ><span class="badge badge-danger dt-value">{{R0 | number:'1.2-2'}}</span></dd>
+          <dt class="col-8 dt-label"  ngbTooltip="Porcentaje de contagiosos">infecciosos</dt>
+          <dd class="col-4 dd-value" ><span class="badge badge-danger ">{{infecciosos/populationNumber | percent}}</span></dd>
+          <dt class="col-8 dt-label" ngbTooltip="Porcentaje de afectados">afectados</dt>
+          <dd class="col-4 dd-value"><span class="badge badge-danger">{{afectados/populationNumber | percent}}</span></dd>
+          <dt class="col-8 dt-label"  ngbTooltip="Porcentaje de fallecidos">Fallecidos</dt>
+          <dd class="col-4 dd-value"><span class="badge badge-death">{{death/afectados | percent}}</span></dd>
+          <dt class="col-8 dt-label" ngbTooltip="Porcentaje de inmunes">Inmunes</dt>
+          <dd class="col-4 dd-value"><span class="badge badge-success">{{inmunes/populationNumber | percent}}</span></dd>
         </dl>
-
+      </div>
     </div>
-
   </div>
 </div>
+<footer class="bg-dark text-white mt-4">
+  Basilio Alvarez
+</footer>
