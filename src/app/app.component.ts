@@ -5,6 +5,10 @@ import * as p5 from 'p5';
 import * as Chart from 'chart.js';
 import {MediumWindow} from './su-vir/utils';
 
+/**
+ *  Para construir la publicación  ng build --prod --output-path docs --base-href /Propagation/
+ */
+
 
 interface IHumanPoint extends IDataPoint {
   data: Human;
