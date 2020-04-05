@@ -39,6 +39,7 @@ export class AppComponent implements OnInit {
   public newInfecteds = 0;
   public inmunes=0;
   public R0 = 0;
+  public initialInmunes=0;
   public infectOp: IInfectionOptions = {
     distanceBase: 2,
     contagiousProb: 0.8,
@@ -70,6 +71,9 @@ export class AppComponent implements OnInit {
     this.baseKd = KdTree.createFrom(this.humans);
     // this.baseKd.trace();
     (this.chart.data.datasets[0].data as Chart.ChartPoint[]).length=0;
+    // indicamos los n primeros como inmunes
+    const nInmunes=Math.trunc(this.initialInmunes*this.populationNumber);
+    for(let i=0;i<nInmunes;i++) hs[i].inmunize();
     const r = this.baseKd.root;
     // Infectamos los 3 primeros
     inf(r);
@@ -95,6 +99,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.setupP5();
     this.initChart();
+    setTimeout(()=>this.setupHumans(), 1000);
   }
 
 
@@ -103,7 +108,7 @@ export class AppComponent implements OnInit {
     this.canvasP5.background(250);
     this.drawHumans();
     const maxDist = this.infectOp.contagiousProb* 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
-    this.canvasP5.rect(100, 100, maxDist * 2, maxDist * 2);
+    // this.canvasP5.rect(100, 100, maxDist * 2, maxDist * 2);
     /* this.canvasP5.line(this.centerPos, 0, this.centerPos, 400);
     this.canvasP5.line(0, 350, 600, 350);
     this.bola.display();
@@ -121,7 +126,7 @@ export class AppComponent implements OnInit {
   }
 
   protected colorFromHumanStatus(h: Human) {
-    if (!h.hstatus) return [127, 127, 127, 255];
+    if (!h.hstatus) return [211, 211, 211, 255];
     if (h.hstatus & HStatus.infected) {
       if (h.hstatus & HStatus.infectious) return [255, 0, 0, 255];
       return [255, 153, 51, 255];
@@ -202,7 +207,7 @@ export class AppComponent implements OnInit {
     }
     this.death = totalDeath;
     this.infecciosos = totalInfecciosos;
-    this.afectados = totalAfectados;
+    this.afectados = totalAfectados-Math.trunc(this.initialInmunes*this.populationNumber);
     this.inmunes=totalInmunes;
   }
 
@@ -250,12 +255,14 @@ export class AppComponent implements OnInit {
         datasets: [
           {
             label: '% Infectados',
+            yAxisID:'I',
             borderColor: '#FF0000',
             data: [] as Chart.ChartPoint[],
             fill: false
           },
           {
-            label: 'No afectados',
+            label: '% afectados',
+            yAxisID:'D',
             borderColor: '#C0C0C0',
             data: [] as Chart.ChartPoint[],
             fill: false
@@ -270,12 +277,31 @@ export class AppComponent implements OnInit {
           xAxes: [
             {
               type: 'linear',
-              display: true
+              display: true,
+              ticks:{
+                max:100
+              }
             }
           ],
           yAxes: [
             {
-              display: true
+              id: 'I',
+              type: 'linear',
+              position: 'left',
+              display: true,
+              scaleLabel:{
+                display:true,
+                labelString:'% infectatos'
+              }
+            },{
+              id: 'D',
+              type: 'linear',
+              position: 'right',
+              display: true,
+              ticks: {
+                max: 100,
+                min: 0
+              }
             }
           ]
         },
@@ -288,8 +314,8 @@ export class AppComponent implements OnInit {
     const nsam = {x: this.currentDay, y: 100 * this.infecciosos / this.populationNumber};
     // const p: Chart.ChartPoint[] ;
     (this.chart.data.datasets[0].data as Chart.ChartPoint[]).push(nsam);
-    /* const nsam2 = {x: this.currentDay, y: 100 * this.noAfectados / this.populationNumber};
-    (this.chart.data.datasets[1].data as Chart.ChartPoint[]).push(nsam2); */
+    const nsam2 = {x: this.currentDay, y: 100 * this.afectados / this.populationNumber};
+    (this.chart.data.datasets[1].data as Chart.ChartPoint[]).push(nsam2);
     this.chart.update();
   }
 

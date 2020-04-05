@@ -1,7 +1,9 @@
 $deadcolor:DimGray;
+$normalColor:	lightgray;
 
 $theme-colors: (
-  "death": $deadcolor
+  "death": $deadcolor,
+  "normal": $normalColor
 );
 
 @import "node_modules/bootstrap/scss/bootstrap";

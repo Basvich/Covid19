@@ -59,6 +59,10 @@ export class Human {
     return true;
   }
 
+  public inmunize(){
+    this.hstatus=HStatus.inmune;
+  }
+
   /** Cada persona cambia su estado de salud */
   public checkStatus(currentDay: number, opt: IInfectionHuman) {
     if (!this.hstatus) return;
