@@ -22,7 +22,7 @@ export class AppComponent implements OnInit {
   humans: IHumanPoint[];
   baseKd: KdTree;
   currentDay = 0;
-  mediumDistance: number;
+  mediumDistance=0;
   sqrDistanceBase: number;
   R0Medium=new MediumWindow(4);
 
@@ -37,14 +37,15 @@ export class AppComponent implements OnInit {
   /**  */
   public afectados = 1;
   public newInfecteds = 0;
+  public inmunes=0;
   public R0 = 0;
   public infectOp: IInfectionOptions = {
     distanceBase: 2,
     contagiousProb: 0.8,
     humanData: {
-      incubation: {mean: 3, stdDev: 1.0},
+      incubation: {mean: 3, stdDev: 1.2},
       sintomatic: 0.5,
-      infectionPeriod: {mean: 10, stdDev: 4},
+      infectionPeriod: {mean: 12, stdDev: 4},
       lethality: 0.03
     }
   };
@@ -202,6 +203,7 @@ export class AppComponent implements OnInit {
     this.death = totalDeath;
     this.infecciosos = totalInfecciosos;
     this.afectados = totalAfectados;
+    this.inmunes=totalInmunes;
   }
 
   /** Obtiene la lista de nuevos infectados. NO los infecta */
@@ -247,7 +249,7 @@ export class AppComponent implements OnInit {
       data: {
         datasets: [
           {
-            label: 'Infectados',
+            label: '% Infectados',
             borderColor: '#FF0000',
             data: [] as Chart.ChartPoint[],
             fill: false
