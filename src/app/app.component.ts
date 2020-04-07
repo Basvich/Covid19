@@ -283,7 +283,7 @@ export class AppComponent implements OnInit {
               type: 'linear',
               display: true,
               ticks:{
-                max:100
+                suggestedMax:100
               }
             }
           ],
