@@ -4,6 +4,7 @@ import {Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition} from './su
 import * as p5 from 'p5';
 import * as Chart from 'chart.js';
 import {MediumWindow} from './su-vir/utils';
+import { environment } from '../environments/environment';
 
 /**
  *  Para construir la publicación  ng build --prod --output-path docs --base-href /Propagation/
@@ -29,6 +30,7 @@ export class AppComponent implements OnInit {
   mediumDistance=0;
   sqrDistanceBase: number;
   R0Medium=new MediumWindow(4);
+  public version=environment.appVersion;
 
   public chart: Chart = null;
   /** Elementos infecciosos */
