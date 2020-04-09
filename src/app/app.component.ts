@@ -5,6 +5,7 @@ import * as p5 from 'p5';
 import * as Chart from 'chart.js';
 import {MediumWindow} from './su-vir/utils';
 import { environment } from '../environments/environment';
+import { faCoffee, faStepForward, faForward } from '@fortawesome/free-solid-svg-icons';
 
 /**
  *  Para construir la publicación  ng build --prod --output-path docs --base-href /Propagation/
@@ -22,6 +23,9 @@ interface IHumanPoint extends IDataPoint {
 })
 export class AppComponent implements OnInit {
   readonly populationNumber = 16000;
+  faCoffee = faCoffee;
+  faStepForward=faStepForward;
+  faForward=faForward;
   private canvasP5: p5;
   title = 'covid19';
   humans: IHumanPoint[];
