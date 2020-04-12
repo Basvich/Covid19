@@ -2,6 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms'; 
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { AppComponent } from './app.component';
 
@@ -12,7 +13,8 @@ import { AppComponent } from './app.component';
   imports: [
     NgbModule,
     FormsModule,
-    BrowserModule
+    BrowserModule,
+    FontAwesomeModule
   ],
   providers: [],
   bootstrap: [AppComponent]
