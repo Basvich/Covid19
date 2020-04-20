@@ -1,4 +1,4 @@
-import {IPosition, Rectangle, Point} from './kd-tree';
+import { IPosition, Rectangle, Point } from './kd-tree';
 
 
 export interface INormalDist {
@@ -15,6 +15,8 @@ export interface IInfectionHuman {
   infectionPeriod: INormalDist;
   /** Posibilidad de muerte */
   lethality: number;
+  /** Posibilidad de ganar inmunidad (si no murió) */
+  immunity: number;
 }
 
 export interface IInfectionOptions {
@@ -37,12 +39,12 @@ export enum HStatus {
 
 
 export class Human {
-  position: Point;
   private nextDay = 10000;
   hstatus: HStatus = HStatus.none;
   endIncubationDay: number;
   endInfectionDay: number;
   willDie: boolean;
+  willInmune: boolean;
   howManyInfect=0; // A cuantos infecto
 
   public constructor() {
@@ -56,6 +58,7 @@ export class Human {
     this.endIncubationDay = currentDay + getRndNormalDist(opt.incubation);
     this.endInfectionDay = this.endIncubationDay + getRndNormalDist(opt.infectionPeriod);
     this.willDie = getSuccess(opt.lethality);
+    if(!this.willDie) this.willInmune=getSuccess(opt.immunity);
     return true;
   }
 
@@ -79,7 +82,8 @@ export class Human {
           if (this.willDie) {
             this.hstatus = HStatus.death;
           } else {
-            this.hstatus = HStatus.inmune;
+            if(this.willInmune) this.hstatus = HStatus.inmune;
+            else this.hstatus=HStatus.none;
           }
         }
       }
@@ -96,8 +100,7 @@ export class HumanFactory {
   public static create(count: number, opt: IHumanOpt): Array<Human> {
     const res: Array<Human> = [];
     for (let i = 0; i < count; i++) {
-      const nh = new Human();
-      nh.position = getRndPos(opt.zone);
+      const nh = new Human();     
       res.push(nh);
     }
     return res;
@@ -108,7 +111,6 @@ export class HumanFactory {
     for (let x = 0; x < 8; x++) {
       for (let y = 0; y < 8; y++) {
         const nh = new Human();
-        nh.position = new Point(x * 4, y * 4);
         res.push(nh);
       }
     }
@@ -123,7 +125,6 @@ export class HumanFactory {
     const res: Array<Human> = [];
     p.forEach((el) => {
       const nh = new Human();
-      nh.position = el;
       res.push(nh);
     });
     return res;
@@ -149,6 +150,7 @@ function getRndPos(rec: Rectangle): Point {
 }
 
 function getRndNormalDist(dat: INormalDist): number {
+  //return dat.mean;
   return getRndNormal(dat.mean, dat.stdDev);
 }
 
@@ -156,6 +158,40 @@ function getRndNormalDist(dat: INormalDist): number {
 function getRndNormal(mean: number, stdDev: number): number {
   const u1 = 1.0 - Math.random();
   const u2 = 1.0 - Math.random();
-  const randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.sign(2.0 * Math.PI * u2);
+  const randStdNormal = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
   return mean + stdDev * randStdNormal;
+}
+
+/** devuelve un punto en el entorno del anterior, y limitado por rectangle. */
+function getRndGauPos(recLimit: Rectangle, refPoint: Point, stdDev: number): Point{
+  if(!recLimit.fullContains(refPoint)) throw Error('Ref point invalid');
+  let res: Point;
+  do{
+    const prnd=new Point(getRndNormal(0, stdDev),getRndNormal(0, stdDev));
+    res=refPoint.addPoint(prnd);
+  }while(! recLimit.fullContains(res));
+  return res;
+}
+
+export function* getRndPopulationPos(recLimit: Rectangle){
+   while(true){
+     let pCity=new Point(400,200);// getRndPos(recLimit);
+     const r= 50; // recLimit.top-recLimit.bottom;
+     while(true){       
+       const res=getRndGauPos(recLimit,pCity,r);
+       yield res;
+     }
+   }   
+}
+
+export function* getConsecutivePopulationPos(recLimit: Rectangle){
+  let p=new Point(0,0);
+  while(true){
+    yield p;
+    p=p.addDis(4,0);
+    if(p.x>recLimit.right){
+      p=new Point(0,p.y+4);
+      if(p.y>recLimit.top) p=new Point(0,0);
+    }
+  }     
 }

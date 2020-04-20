@@ -34,16 +34,23 @@
               </div>
             </li>
             <li class="list-group-item  p-1">
-              <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren (tanto x 1)">
+              <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren">
                 <div class="input-group-prepend"><span class="input-group-text">Mortalidad</span></div>
                 <input type="number" min="0" max="90" step="5" [ngModel]="infectOp.humanData.lethality * 100" (ngModelChange)="infectOp.humanData.lethality=$event / 100">
+                <div class="input-group-append"><span class="input-group-text">%</span></div>
+              </div>
+            </li>
+            <li class="list-group-item  p-1">
+              <div class="input-group input-group-sm" ngbTooltip="Cuantos ganan inmunidad después de pasar enfermedad y no morir">
+                <div class="input-group-prepend"><span class="input-group-text">Inmunidad</span></div>
+                <input type="number" min="0" max="90" step="5" [ngModel]="infectOp.humanData.immunity * 100" (ngModelChange)="infectOp.humanData.immunity=$event / 100">
                 <div class="input-group-append"><span class="input-group-text">%</span></div>
               </div>
             </li>
             <li class="list-group-item p-1">
               <div class="input-group input-group-sm" ngbTooltip="Porcentaje de inmunes inicialmente">
                 <div class="input-group-prepend"><span class="input-group-text">Inmunes</span></div>
-                <input type="number" min="0" max="0.9" step="0.1" [ngModel]="initialInmunes * 100" (ngModelChange)="initialInmunes=$event / 100">
+                <input type="number" min="0" max="90" step="5" [ngModel]="initialInmunes * 100" (ngModelChange)="initialInmunes=$event / 100">
                 <div class="input-group-append"><span class="input-group-text">%</span></div>
               </div>
             </li>
@@ -88,14 +95,19 @@
             <fa-icon [icon]="faForward"></fa-icon>
           </button>
         </div>
+        <div class="col ">    
+          <span class="badge badge-info" ngbTooltip="Dia actual">{{currentDay}}</span>      
+        </div>
       </div>
       <dl class="row">
         <dt class="col-8 dt-label" ngbTooltip="Distancia media actual">Distancia</dt>
         <dd class="col-4 dd-value"><span class="badge badge-info dt-value">{{mediumDistance | number:'0.0-1' }}</span></dd>
         <dt class="col-8 dt-label" ngbTooltip="Cuantos infecta cada infectado">R0</dt>
         <dd class="col-4 dd-value"><span class="badge badge-danger dt-value">{{R0 | number:'1.2-2'}}</span></dd>
+        <dt class="col-8 dt-label" ngbTooltip="Porcentaje de infectados (contagiosos o no)">infectados</dt>
+        <dd class="col-4 dd-value"><span class="badge badge-danger ">{{infectados/populationNumber | percent}}</span></dd>
         <dt class="col-8 dt-label" ngbTooltip="Porcentaje de contagiosos">infecciosos</dt>
-        <dd class="col-4 dd-value"><span class="badge badge-danger ">{{infecciosos/populationNumber | percent}}</span></dd>
+        <dd class="col-4 dd-value"><span class="badge badge-danger ">{{infecciosos/populationNumber | percent}}</span></dd>        
         <dt class="col-8 dt-label" ngbTooltip="Porcentaje de afectados">afectados</dt>
         <dd class="col-4 dd-value"><span class="badge badge-danger">{{afectados/populationNumber | percent}}</span></dd>
         <dt class="col-8 dt-label" ngbTooltip="Porcentaje de fallecidos">Fallecidos</dt>

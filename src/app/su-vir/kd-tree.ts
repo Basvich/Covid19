@@ -33,6 +33,10 @@ export class Point implements IPosition {
     if (d === 0) return this.x;
     return this.y;
   }
+
+  public distance(other: Point): number{
+    return Math.sqrt((other.x-this.x)**2 + (other.y-this.y)**2);
+  }
 }
 
 export class Rectangle {
