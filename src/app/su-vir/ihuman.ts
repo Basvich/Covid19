@@ -1,4 +1,5 @@
 import { IPosition, Rectangle, Point } from './kd-tree';
+import { ReturnStatement } from '@angular/compiler';
 
 
 export interface INormalDist {
@@ -173,19 +174,45 @@ function getRndGauPos(recLimit: Rectangle, refPoint: Point, stdDev: number): Poi
   return res;
 }
 
-export function* getRndPopulationPos(recLimit: Rectangle){
+
+export type PopulationDistribution = (recLimit: Rectangle) => Generator<Point, void, unknown>;
+
+export const geUnique: PopulationDistribution=function*(recLimit: Rectangle){
+  yield new Point(0,0);
+};
+
+export const getRndPopulationPos: PopulationDistribution= function*(recLimit: Rectangle){
    while(true){
-     let pCity=new Point(400,200);// getRndPos(recLimit);
-     const r= 50; // recLimit.top-recLimit.bottom;
-     while(true){       
-       const res=getRndGauPos(recLimit,pCity,r);
+     while(true){
+       const res=getRndPos(recLimit);
        yield res;
      }
-   }   
+   }
 }
 
-export function* getConsecutivePopulationPos(recLimit: Rectangle){
-  let p=new Point(0,0);
+export const getOrganicPopulationPos: PopulationDistribution= function*(recLimit: Rectangle){
+  while(true){
+    const pCity= getRndPos(recLimit); // new Point(400,200);//
+    const rCity=  (recLimit.top-recLimit.bottom)/5;
+    const maxNumZone1=20; // zonas por ciudad
+    let nZone1=0;
+    while(nZone1<maxNumZone1){
+      const pZone1=getRndGauPos(recLimit,pCity,rCity);
+      const rZone1=rCity/3;
+      const maxZone2=200; //Habitantes por zona
+      let nZone2=0;
+      while(nZone2<maxZone2){
+        const res=getRndGauPos(recLimit, pZone1, rZone1);
+        yield res;
+        nZone2++;
+      }
+      nZone1++; 
+    }
+  }
+}
+
+export const getConsecutivePopulationPos: PopulationDistribution= function*(recLimit: Rectangle){
+  let p=new Point(0,40);
   while(true){
     yield p;
     p=p.addDis(4,0);

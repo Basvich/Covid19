@@ -13,7 +13,7 @@ export class Point implements IPosition {
     return new Point(p.x, p.y);
   }
 
-  public addDis(dx, dy): Point {
+  public addDis(dx: number, dy: number): Point {
     return new Point(this.x + dx, this.y + dy);
   }
 
