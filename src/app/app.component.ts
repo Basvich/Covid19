@@ -1,6 +1,6 @@
 import {Component, OnInit} from '@angular/core';
-import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess} from './su-vir/ihuman';
-import {Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition} from './su-vir/kd-tree';
+import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess, getRndPopulationPos, getConsecutivePopulationPos, PopulationDistribution, getOrganicPopulationPos} from './su-vir/ihuman';
+import { Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition } from './su-vir/kd-tree';
 import * as p5 from 'p5';
 import * as Chart from 'chart.js';
 import {MediumWindow} from './su-vir/utils';
@@ -11,9 +11,10 @@ import { faCoffee, faStepForward, faForward } from '@fortawesome/free-solid-svg-
  *  Para construir la publicación  ng build --prod --output-path docs --base-href /Propagation/
  */
 
-
-interface IHumanPoint extends IDataPoint {
-  data: Human;
+interface ISelectetionDistribution{
+  f: PopulationDistribution;
+  nfo: string;
+  tooltip: string;
 }
 
 @Component({
@@ -22,16 +23,28 @@ interface IHumanPoint extends IDataPoint {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-  readonly populationNumber = 16000;
+  readonly populationNumber = 18000;
+  /** Numero de localizaciones diferentes por persona */
+  readonly diferentLaocations=2;
   faCoffee = faCoffee;
   faStepForward=faStepForward;
   faForward=faForward;
   private canvasP5: p5;
   title = 'covid19';
-  humans: IHumanPoint[];
-  baseKd: KdTree;
+  /** Personas existentes */
+  humans: Human[];
+  /** Donde se encuentran */
+  humansPosition: IDataPoint<Human>[];
+  public FuncsPopulates: ISelectetionDistribution[] = [
+    { f: getRndPopulationPos, nfo: 'aleatoria', tooltip:'aleatoria uniforme' },
+    { f: getConsecutivePopulationPos, nfo: 'regular', tooltip:'uniforme' },
+    { f: getOrganicPopulationPos, nfo: 'organica', tooltip:'Distribución con agrupaciones' }
+  ];
+  fDistribution: PopulationDistribution=this.FuncsPopulates[0].f;
+  baseKd: KdTree<Human>;
   currentDay = 0;
   mediumDistance=0;
+  mediumDistance2=0;
   sqrDistanceBase: number;
   R0Medium=new MediumWindow(4);
   public version=environment.appVersion;
@@ -51,15 +64,24 @@ export class AppComponent implements OnInit {
   public R0 = 0;
   public initialInmunes=0;
   public infectOp: IInfectionOptions = {
-    distanceBase: 2,
-    contagiousProb: 0.8,
+    distanceBase: 2.5,
+    contagiousProb: 1,
     humanData: {
       incubation: {mean: 3, stdDev: 1.2},
       sintomatic: 0.5,
       infectionPeriod: {mean: 12, stdDev: 4},
-      lethality: 0.03
+      lethality: 0.03,
+      immunity: 0.9
     }
   };
+
+  public changeDistribution(){
+    if(this.currentDay===0){
+      this.setupHumans();
+    }
+  }
+
+  
 
   public setistanceBase(n: number) {
     this.infectOp.distanceBase = n;
@@ -67,7 +89,7 @@ export class AppComponent implements OnInit {
   }
 
   public setupHumans() {
-    const inf = (n: INodeKdTree) => {
+    const inf = (n: INodeKdTree<Human>) => {
       (n.location.data as Human).infect(0, this.infectOp.humanData);
     };
     const opt: IHumanOpt = {
@@ -76,21 +98,45 @@ export class AppComponent implements OnInit {
     this.currentDay = 0;
     this.sqrDistanceBase = this.infectOp.distanceBase ** 2;
     this.mediumDistance = Math.sqrt(opt.zone.area() / this.populationNumber);
-    const hs = HumanFactory.create(this.populationNumber, opt); // HumanFactory.createTest();
-    this.humans = hs.map((h) => ({data: h, point: h.position}));
-    this.baseKd = KdTree.createFrom(this.humans);
+    this.humans = HumanFactory.create(this.populationNumber, opt); // HumanFactory.createTest();
+    if(!this.fDistribution) this.fDistribution=this.FuncsPopulates[0].f;
+    //this.fDistribution=getConsecutivePopulationPos; //(opt.zone);
+    const posIterator=this.fDistribution(opt.zone);//getRndPopulationPos(opt.zone);
+    this.humansPosition= this.humans.map((h) => ({data: h, point: posIterator.next().value as Point}));
+    // this.mediumDistance2=this.mediumDistanceOfData(this.humansPosition);
+   /*  this.humansPosition = new Array<IDataPoint<Human>>(this.humans.length);
+    for(let i=0; i<this.humansPosition.length; i++){
+      this.humansPosition[i]={data:this.humans[i], point: posIterator.next().value as Point};
+    } */
+    // = this.humans.map((h) => ({data: h, point: posIterator.next()}));
+    this.baseKd = KdTree.createFrom<Human>(this.humansPosition);
     // this.baseKd.trace();
     (this.chart.data.datasets[0].data as Chart.ChartPoint[]).length=0;
+    (this.chart.data.datasets[1].data as Chart.ChartPoint[]).length=0;
     // indicamos los n primeros como inmunes
     const nInmunes=Math.trunc(this.initialInmunes*this.populationNumber);
-    for(let i=0;i<nInmunes;i++) hs[i].inmunize();
+    for(let i=0;i<nInmunes;i++) this.humans[i].inmunize();
     const r = this.baseKd.root;
     // Infectamos los 3 primeros
-    inf(r);
-    inf(r.left);
-    inf(r.right);
+    this.humans[0].infect(0, this.infectOp.humanData); //inf(r);
+    // inf(r.left);
+    // inf(r.right);
     this.chart.clear();
     this.canvasP5.redraw();
+  }
+
+  protected mediumDistanceOfData(data: IDataPoint<any>[]): number {
+    if(!data || data.length===0) return 0;
+    let count=0;
+    let n=0;
+    for(let i=0; i<data.length;i++ ){
+      const pi=data[i].point as Point;
+      for(let j=i+1; j<data.length; j++){
+        count+=pi.distance(data[j].point as Point);
+        n+=1;
+      }
+    }    
+    return count/n;
   }
 
   public oneStep() {
@@ -117,18 +163,16 @@ export class AppComponent implements OnInit {
   protected draw() {
     this.canvasP5.background(250);
     this.drawHumans();
-    const maxDist = this.infectOp.contagiousProb* 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
-    // this.canvasP5.rect(100, 100, maxDist * 2, maxDist * 2);
-    /* this.canvasP5.line(this.centerPos, 0, this.centerPos, 400);
-    this.canvasP5.line(0, 350, 600, 350);
-    this.bola.display();
-    this.carro.display(); */
+    const maxDist = this.calcMaxDistance();// Fuera de aquí lo despreciamos
+    this.canvasP5.noFill();
+    this.canvasP5.rect(50, 50, this.infectOp.distanceBase * 2, this.infectOp.distanceBase * 2);
+    this.canvasP5.rect(50, 50, maxDist * 2, maxDist * 2);
   }
 
   protected drawHumans() {
-    if (!this.humans) return;
+    if (!this.humansPosition) return;
     this.canvasP5.strokeWeight(2);
-    this.humans.forEach((h) => {
+    this.humansPosition.forEach((h) => {
       const color = this.colorFromHumanStatus(h.data);
       this.canvasP5.stroke(color);
       this.canvasP5.point(h.point.x, h.point.y);
@@ -168,7 +212,7 @@ export class AppComponent implements OnInit {
   /** Se realiza la propagación */
   protected propagation() {
     // Los que son infecciosos
-    const contagiosous= this.humans.filter( e => e.data.hstatus & HStatus.infectious);
+    const contagiosous= this.humansPosition.filter( e => e.data.hstatus & HStatus.infectious);
     // Los que serán infectados
     const nuevosContagiados=contagiosous.reduce( (acc: Human[], element) => {
       const prov = this.checkInfection(element);
@@ -197,8 +241,8 @@ export class AppComponent implements OnInit {
     let totalDeath = 0;
     let totalAfectados = 0;
     for (const human of this.humans) {
-      human.data.checkStatus(this.currentDay, this.infectOp.humanData);
-      const hstatus = human.data.hstatus;
+      human.checkStatus(this.currentDay, this.infectOp.humanData);
+      const hstatus = human.hstatus;
       if (!hstatus) continue;
       totalAfectados++;
       if (hstatus & HStatus.infected) {
@@ -219,12 +263,13 @@ export class AppComponent implements OnInit {
     this.infecciosos = totalInfecciosos;
     this.afectados = totalAfectados-Math.trunc(this.initialInmunes*this.populationNumber);
     this.inmunes=totalInmunes;
+    this.infectados=totalInfectados;
   }
 
   /** Obtiene la lista de nuevos infectados. NO los infecta */
-  protected checkInfection(fromHuman: IHumanPoint): Human[] {
+  protected checkInfection(fromHuman: IDataPoint<Human>): Human[] {
     let res: Human[] = null;
-    const maxDist = this.infectOp.contagiousProb* 5 * this.infectOp.distanceBase;// Fuera de aquí lo despreciamos
+    const maxDist = this.calcMaxDistance();// Fuera de aquí lo despreciamos
     const numProb = this.sqrDistanceBase * this.infectOp.contagiousProb;
     const zone: Rectangle = Rectangle.fromRadius(fromHuman.point, maxDist);
     const candidates = this.baseKd.getInZone(zone);
@@ -236,7 +281,7 @@ export class AppComponent implements OnInit {
         return;
       }
       if (h.hstatus) return;  // Ya tiene algo
-      const dist = this.squareDist(h.position as IPosition, fromHuman.point);
+      const dist = this.squareDist(c.point, fromHuman.point);
       let prob: number;
       if (dist <= this.sqrDistanceBase) {
         prob = this.infectOp.contagiousProb;
@@ -244,6 +289,7 @@ export class AppComponent implements OnInit {
         prob = numProb / dist;
       }
       const contagiado = getSuccess(prob);
+      
       if (contagiado) {
         if (!res) res = [];
         res.push(h);
@@ -254,9 +300,10 @@ export class AppComponent implements OnInit {
   }
 
   protected squareDist(p1: IPosition, p2: IPosition): number {
-    return (p2.x - p1.x) ** 2 + (p2.y - p1.y);
+    return (p2.x - p1.x)**2 + (p2.y - p1.y)**2;
   }
 
+  /** Setup de la gráfica */
   protected initChart() {
     // const ctx = document.getElementById('canvaschart') as HTMLCanvasElement;
     this.chart = new Chart('canvaschart', {
@@ -320,13 +367,19 @@ export class AppComponent implements OnInit {
     });
   }
 
+  /** Añadir nuevos datos a la gráfica */
   data2Chart() {
-    const nsam = {x: this.currentDay, y: 100 * this.infecciosos / this.populationNumber};
+    const nsam = {x: this.currentDay, y: 100 * this.infectados / this.populationNumber};
     // const p: Chart.ChartPoint[] ;
     (this.chart.data.datasets[0].data as Chart.ChartPoint[]).push(nsam);
     const nsam2 = {x: this.currentDay, y: 100 * this.afectados / this.populationNumber};
     (this.chart.data.datasets[1].data as Chart.ChartPoint[]).push(nsam2);
     this.chart.update();
+  }
+
+  /** maxima distancia a partir de la cual despreciamos */
+  protected calcMaxDistance(): number {
+    return  this.infectOp.contagiousProb* 5 * this.infectOp.distanceBase;
   }
 
   /** Repite los nodos cercanos a un limite en el kdTree, para que se puedan encontrar en el contrario */
