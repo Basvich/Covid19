@@ -7,13 +7,13 @@ export interface IPosition {
 }
 
 
-export class Point {
+export class Point implements IPosition {
   constructor(public readonly x: number, public readonly y: number) {}
   public static from(p: Point) {
     return new Point(p.x, p.y);
   }
 
-  public addDis(dx, dy): Point {
+  public addDis(dx: number, dy: number): Point {
     return new Point(this.x + dx, this.y + dy);
   }
 
@@ -32,6 +32,10 @@ export class Point {
   public axisValue(d: number): number {
     if (d === 0) return this.x;
     return this.y;
+  }
+
+  public distance(other: Point): number{
+    return Math.sqrt((other.x-this.x)**2 + (other.y-this.y)**2);
   }
 }
 
@@ -75,19 +79,19 @@ export class Rectangle {
 
 }
 
-export interface IDataPoint {
+export interface IDataPoint<T> {
   point: IPosition;
-  data: any;
+  data: T;
 }
 
-export interface INodeKdTree {
-  location: IDataPoint;
-  left?: INodeKdTree;
-  right?: INodeKdTree;
+export interface INodeKdTree<T> {
+  location: IDataPoint<T>;
+  left?: INodeKdTree<T>;
+  right?: INodeKdTree<T>;
 }
 
 
-export class KdTree {
+export class KdTree<T> {
 
   public get count(): number {
     return this.
@@ -96,7 +100,7 @@ export class KdTree {
 
   protected constructor() {}
   private static K = 2;
-  root: INodeKdTree;
+  root: INodeKdTree<T>;
   private _count: number;
 
   protected static axisValue(p: IPosition, axis: number): number {
@@ -104,7 +108,7 @@ export class KdTree {
     else return p.y;
   }
 
-  protected static minimumOld(n1: INodeKdTree, n2: INodeKdTree, depth: number): INodeKdTree {
+  protected static minimumOld(n1: INodeKdTree<any>, n2: INodeKdTree<any>, depth: number): INodeKdTree<any> {
     if (!n1) return n2;
     if (!n2) return n1;
     const axis = depth % this.K;
@@ -112,7 +116,7 @@ export class KdTree {
     else return n2;
   }
 
-  protected static minimum(x: INodeKdTree, y: INodeKdTree, z: INodeKdTree, depth: number): INodeKdTree {
+  protected static minimum(x: INodeKdTree<any>, y: INodeKdTree<any>, z: INodeKdTree<any>, depth: number): INodeKdTree<any> {
     let res = x;
     const axis = depth % this.K;
     if (y && this.axisValue(y.location.point, axis) < this.axisValue(res.location.point, axis)) res = y;
@@ -120,7 +124,7 @@ export class KdTree {
     return res;
   }
 
-  protected static remove(root: INodeKdTree, toRemove: IDataPoint, depth: number): INodeKdTree {
+  protected static remove(root: INodeKdTree<any>, toRemove: IDataPoint<any>, depth: number): INodeKdTree<any> {
     if (!root) return null;
     const cd = depth % this.K;
     if (root.location === toRemove) {
@@ -150,14 +154,14 @@ export class KdTree {
     return root;
   }
 
-  public static createFrom(points: IDataPoint[]): KdTree {
-    const res = new KdTree();
+  public static createFrom<T>(points: IDataPoint<T>[]): KdTree<T> {
+    const res = new KdTree<T>();
     res.root = KdTree.kdTree(points, 0);
     res._count = points.length;
     return res;
   }
 
-  public static findMin(n: INodeKdTree, d: number, depth: number): INodeKdTree {
+  public static findMin<T>(n: INodeKdTree<T>, d: number, depth: number): INodeKdTree<T> {
     if (!n) return undefined;
     const cd = depth % this.K;
     if (d === cd) {
@@ -170,15 +174,15 @@ export class KdTree {
     }
   }
 
-  protected static kdTree(points: IDataPoint[], depth: number): INodeKdTree {
+  protected static kdTree<T>(points: IDataPoint<T>[], depth: number): INodeKdTree<T> {
     if (!points || points.length === 0) return null;
     
     const axis = depth % this.K;
-    const sortedPoints: IDataPoint[] = points.sort((p1, p2) =>
+    const sortedPoints: IDataPoint<T>[] = points.sort((p1, p2) =>
       Math.sign(KdTree.axisValue(p1.point, axis) - KdTree.axisValue(p2.point, axis))
     );
     const medianIndex = Math.floor(sortedPoints.length / 2);
-    const node: INodeKdTree = {
+    const node: INodeKdTree<T> = {
       location: sortedPoints[medianIndex]
     };
     let ln = medianIndex;
@@ -192,9 +196,9 @@ export class KdTree {
     return node;
   }
 
-  public GetAll(): IDataPoint[] {
-    const res: Array<IDataPoint> = [];
-    const addtn = (n: INodeKdTree) => {
+  public GetAll(): IDataPoint<T>[] {
+    const res: Array<IDataPoint<T>> = [];
+    const addtn = (n: INodeKdTree<T>) => {
       if (!n) return;
       res.push(n.location);
       addtn(n.left);
@@ -204,17 +208,17 @@ export class KdTree {
     return res;
   }
 
-  public Clone(): KdTree {
-    const res = new KdTree();
+  public Clone(): KdTree<T> {
+    const res = new KdTree<T>();
     res.root = this.cloneNode(this.root);
     res._count = this._count;
     return res;
   }
 
 
-  protected cloneNode(from: INodeKdTree): INodeKdTree {
+  protected cloneNode(from: INodeKdTree<T>): INodeKdTree<T> {
     if (!from) return undefined;
-    const res: INodeKdTree = {
+    const res: INodeKdTree<T> = {
       location: from.location,
       left: this.cloneNode(from.left),
       right: this.cloneNode(from.right)
@@ -222,7 +226,8 @@ export class KdTree {
     return res;
   }
 
-  public getInZone(zone: Rectangle, node: INodeKdTree = this.root, depth: number = 0, currents: IDataPoint[] = null): IDataPoint[] {
+  public getInZone(zone: Rectangle, node: INodeKdTree<T> = this.root,
+                   depth: number = 0, currents: IDataPoint<T>[] = null): IDataPoint<T>[] {
     let res = currents;
     if (!node) return currents;
     const axis = depth % KdTree.K;
@@ -248,7 +253,7 @@ export class KdTree {
   }
 
   /** Se añade un nuevo nodo. Como se añade siempre al final, puede resultar no balanceado */
-  public insert(newData: IDataPoint, root: INodeKdTree = this.root, depth=0): INodeKdTree {
+  public insert(newData: IDataPoint<T>, root: INodeKdTree<T> = this.root, depth=0): INodeKdTree<T> {
     if(!root){
       return {location:newData};
     }
@@ -265,7 +270,7 @@ export class KdTree {
     this.traceNode(this.root, 0);
   }
 
-  protected traceNode(node: INodeKdTree, depth: number) {
+  protected traceNode(node: INodeKdTree<T>, depth: number) {
     if (!node) return;
     const axis = depth % KdTree.K;
     const saxis = axis ? 'y' : 'x';
