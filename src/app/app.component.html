@@ -113,8 +113,8 @@
       <dl class="row">
         <dt class="col-8 dt-label" ngbTooltip="Distancia media actual">Distancia</dt>
         <dd class="col-4 dd-value"><span class="badge badge-info dt-value">{{mediumDistance | number:'0.0-1' }}</span></dd>
-        <dt class="col-8 dt-label" ngbTooltip="Cuantos infecta cada infectado">R0</dt>
-        <dd class="col-4 dd-value"><span class="badge badge-danger dt-value">{{R0 | number:'1.2-2'}}</span></dd>
+        <dt class="col-8 dt-label" ngbTooltip="Infectados nuevos">Variación</dt><dd class="col-4 dd-value"><span class="badge badge-danger dt-value">{{derivated1 | number:'1.2-2'}}</span></dd>
+        <dt class="col-8 dt-label" ngbTooltip="Crecimiento en los nuevos infectados (2 derivada)">Crecimiento</dt><dd class="col-4 dd-value"><span class="badge badge-danger dt-value">{{derivated2 | number:'1.2-2'}}</span></dd>
         <dt class="col-8 dt-label" ngbTooltip="Porcentaje de infectados (contagiosos o no)">infectados</dt>
         <dd class="col-4 dd-value"><span class="badge badge-danger ">{{infectados/populationNumber | percent}}</span></dd>
         <dt class="col-8 dt-label" ngbTooltip="Porcentaje de contagiosos">infecciosos</dt>

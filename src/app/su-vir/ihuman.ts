@@ -151,7 +151,7 @@ function getRndPos(rec: Rectangle): Point {
 }
 
 function getRndNormalDist(dat: INormalDist): number {
-  //return dat.mean;
+  // return dat.mean;
   return getRndNormal(dat.mean, dat.stdDev);
 }
 

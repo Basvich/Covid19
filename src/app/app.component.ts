@@ -1,9 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess, getRndPopulationPos, getConsecutivePopulationPos, PopulationDistribution, getOrganicPopulationPos} from './su-vir/ihuman';
+import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess,
+   getRndPopulationPos, getConsecutivePopulationPos, PopulationDistribution, getOrganicPopulationPos} from './su-vir/ihuman';
 import { Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition } from './su-vir/kd-tree';
 import * as p5 from 'p5';
 import * as Chart from 'chart.js';
-import {MediumWindow} from './su-vir/utils';
+import {MediumWindow, DerivatedWindow} from './su-vir/utils';
 import { environment } from '../environments/environment';
 import { faCoffee, faStepForward, faForward } from '@fortawesome/free-solid-svg-icons';
 
@@ -47,6 +48,9 @@ export class AppComponent implements OnInit {
   mediumDistance2=0;
   sqrDistanceBase: number;
   R0Medium=new MediumWindow(4);
+  acceleration=new DerivatedWindow();
+  velMedium=new MediumWindow(5);
+  accMedium=new MediumWindow(5);
   public version=environment.appVersion;
 
   public chart: Chart = null;
@@ -62,6 +66,10 @@ export class AppComponent implements OnInit {
   public newInfecteds = 0;
   public inmunes=0;
   public R0 = 0;
+  /** Primera derivada */
+  public derivated1=0;
+  /** segunda derivada */
+  public derivated2=0;
   public initialInmunes=0;
   public infectOp: IInfectionOptions = {
     distanceBase: 2.5,
@@ -81,8 +89,6 @@ export class AppComponent implements OnInit {
     }
   }
 
-  
-
   public setistanceBase(n: number) {
     this.infectOp.distanceBase = n;
     this.sqrDistanceBase = this.infectOp.distanceBase ** 2;
@@ -100,8 +106,7 @@ export class AppComponent implements OnInit {
     this.mediumDistance = Math.sqrt(opt.zone.area() / this.populationNumber);
     this.humans = HumanFactory.create(this.populationNumber, opt); // HumanFactory.createTest();
     if(!this.fDistribution) this.fDistribution=this.FuncsPopulates[0].f;
-    //this.fDistribution=getConsecutivePopulationPos; //(opt.zone);
-    const posIterator=this.fDistribution(opt.zone);//getRndPopulationPos(opt.zone);
+    const posIterator=this.fDistribution(opt.zone);// getRndPopulationPos(opt.zone);
     this.humansPosition= this.humans.map((h) => ({data: h, point: posIterator.next().value as Point}));
     // this.mediumDistance2=this.mediumDistanceOfData(this.humansPosition);
    /*  this.humansPosition = new Array<IDataPoint<Human>>(this.humans.length);
@@ -135,7 +140,7 @@ export class AppComponent implements OnInit {
         count+=pi.distance(data[j].point as Point);
         n+=1;
       }
-    }    
+    }
     return count/n;
   }
 
@@ -264,6 +269,9 @@ export class AppComponent implements OnInit {
     this.afectados = totalAfectados-Math.trunc(this.initialInmunes*this.populationNumber);
     this.inmunes=totalInmunes;
     this.infectados=totalInfectados;
+    this.acceleration.add(this.infectados);
+    this.derivated1= this.velMedium.add( this.acceleration.velocity);
+    this.derivated2= this.accMedium.add(this.acceleration.acceleration);
   }
 
   /** Obtiene la lista de nuevos infectados. NO los infecta */
@@ -289,7 +297,7 @@ export class AppComponent implements OnInit {
         prob = numProb / dist;
       }
       const contagiado = getSuccess(prob);
-      
+
       if (contagiado) {
         if (!res) res = [];
         res.push(h);
