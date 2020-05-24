@@ -94,7 +94,10 @@ export class Human {
 }
 
 export interface IHumanOpt {
+  /** Zona en la que se mueven */
   zone: Rectangle;
+  /** porcentaje de los que se mueven */
+  moving: number;
 }
 
 export class HumanFactory {
@@ -164,7 +167,7 @@ function getRndNormal(mean: number, stdDev: number): number {
 }
 
 /** devuelve un punto en el entorno del anterior, y limitado por rectangle. */
-function getRndGauPos(recLimit: Rectangle, refPoint: Point, stdDev: number): Point{
+export function getRndGauPos(recLimit: Rectangle, refPoint: Point, stdDev: number): Point{
   if(!recLimit.fullContains(refPoint)) throw Error('Ref point invalid');
   let res: Point;
   do{
