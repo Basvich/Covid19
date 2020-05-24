@@ -1,9 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess, getRndPopulationPos, getConsecutivePopulationPos, PopulationDistribution, getOrganicPopulationPos} from './su-vir/ihuman';
+import {IHumanOpt, Human, HumanFactory, IInfectionOptions, HStatus, getSuccess,
+   getRndPopulationPos, getConsecutivePopulationPos, PopulationDistribution, getOrganicPopulationPos, getRndGauPos} from './su-vir/ihuman';
 import { Rectangle, Point, IDataPoint, KdTree, INodeKdTree, IPosition } from './su-vir/kd-tree';
 import * as p5 from 'p5';
 import * as Chart from 'chart.js';
-import {MediumWindow} from './su-vir/utils';
+import {MediumWindow, DerivatedWindow} from './su-vir/utils';
 import { environment } from '../environments/environment';
 import { faCoffee, faStepForward, faForward } from '@fortawesome/free-solid-svg-icons';
 
@@ -34,19 +35,27 @@ export class AppComponent implements OnInit {
   /** Personas existentes */
   humans: Human[];
   /** Donde se encuentran */
-  humansPosition: IDataPoint<Human>[];
+  // humansPosition: IDataPoint<Human>[];
+  /** Diferentes lugares donde econtrarse */
+  humansPositions: IDataPoint<Human>[][] = [];
   public FuncsPopulates: ISelectetionDistribution[] = [
     { f: getRndPopulationPos, nfo: 'aleatoria', tooltip:'aleatoria uniforme' },
     { f: getConsecutivePopulationPos, nfo: 'regular', tooltip:'uniforme' },
     { f: getOrganicPopulationPos, nfo: 'organica', tooltip:'Distribución con agrupaciones' }
   ];
   fDistribution: PopulationDistribution=this.FuncsPopulates[0].f;
-  baseKd: KdTree<Human>;
+  // baseKd: KdTree<Human>;
+  /** Por cada lugares donde puede encontrarse */
+  baseKds: KdTree<Human>[]=[];
   currentDay = 0;
+  posIndex=0;
   mediumDistance=0;
   mediumDistance2=0;
   sqrDistanceBase: number;
   R0Medium=new MediumWindow(4);
+  acceleration=new DerivatedWindow();
+  velMedium=new MediumWindow(5);
+  accMedium=new MediumWindow(5);
   public version=environment.appVersion;
 
   public chart: Chart = null;
@@ -62,6 +71,10 @@ export class AppComponent implements OnInit {
   public newInfecteds = 0;
   public inmunes=0;
   public R0 = 0;
+  /** Primera derivada */
+  public derivated1=0;
+  /** segunda derivada */
+  public derivated2=0;
   public initialInmunes=0;
   public infectOp: IInfectionOptions = {
     distanceBase: 2.5,
@@ -81,8 +94,6 @@ export class AppComponent implements OnInit {
     }
   }
 
-  
-
   public setistanceBase(n: number) {
     this.infectOp.distanceBase = n;
     this.sqrDistanceBase = this.infectOp.distanceBase ** 2;
@@ -93,36 +104,57 @@ export class AppComponent implements OnInit {
       (n.location.data as Human).infect(0, this.infectOp.humanData);
     };
     const opt: IHumanOpt = {
-      zone: new Rectangle(0, 800, 0, 400)
+      zone: new Rectangle(0, 800, 0, 400),
+      moving:0.1
     };
     this.currentDay = 0;
     this.sqrDistanceBase = this.infectOp.distanceBase ** 2;
     this.mediumDistance = Math.sqrt(opt.zone.area() / this.populationNumber);
     this.humans = HumanFactory.create(this.populationNumber, opt); // HumanFactory.createTest();
     if(!this.fDistribution) this.fDistribution=this.FuncsPopulates[0].f;
-    //this.fDistribution=getConsecutivePopulationPos; //(opt.zone);
-    const posIterator=this.fDistribution(opt.zone);//getRndPopulationPos(opt.zone);
-    this.humansPosition= this.humans.map((h) => ({data: h, point: posIterator.next().value as Point}));
-    // this.mediumDistance2=this.mediumDistanceOfData(this.humansPosition);
-   /*  this.humansPosition = new Array<IDataPoint<Human>>(this.humans.length);
-    for(let i=0; i<this.humansPosition.length; i++){
-      this.humansPosition[i]={data:this.humans[i], point: posIterator.next().value as Point};
-    } */
+    const posIterator=this.fDistribution(opt.zone);// getRndPopulationPos(opt.zone);
+    // this.humansPosition= this.humans.map((h) => ({data: h, point: posIterator.next().value as Point}));
+    this.setupPositions(opt);
     // = this.humans.map((h) => ({data: h, point: posIterator.next()}));
-    this.baseKd = KdTree.createFrom<Human>(this.humansPosition);
+    // this.baseKd = KdTree.createFrom<Human>(this.humansPosition);
     // this.baseKd.trace();
     (this.chart.data.datasets[0].data as Chart.ChartPoint[]).length=0;
     (this.chart.data.datasets[1].data as Chart.ChartPoint[]).length=0;
     // indicamos los n primeros como inmunes
     const nInmunes=Math.trunc(this.initialInmunes*this.populationNumber);
     for(let i=0;i<nInmunes;i++) this.humans[i].inmunize();
-    const r = this.baseKd.root;
+    // const r = this.baseKd.root;
     // Infectamos los 3 primeros
     this.humans[0].infect(0, this.infectOp.humanData); //inf(r);
     // inf(r.left);
     // inf(r.right);
     this.chart.clear();
     this.canvasP5.redraw();
+  }
+
+  /** Rellena las distintas posiciones donde pueden encontrarse los humanso. Elimina anteriores */
+  protected setupPositions(opt: IHumanOpt){
+    const nPos=2;
+    this.baseKds.length=0;
+    this.humansPositions.length=0;
+    const posIterator=this.fDistribution(opt.zone);
+    const basePos=this.humans.map((h) => ({data: h, point: posIterator.next().value as Point}));
+    const kd0= KdTree.createFrom<Human>(basePos);
+    this. baseKds.push(kd0);
+    this.humansPositions.push(basePos);    
+    for(let i=1; i<nPos; i++){
+      // Copiamos el array y movemos solo el % indicado
+      const displacedPos=basePos.map((v,index)=>{
+        const rData=v.data;
+        let rPos=v.point;
+        if(getSuccess(opt.moving)){
+          rPos=getRndGauPos(opt.zone, rPos, 50);
+        }
+        return {data:rData, point: rPos};
+      });
+      this.humansPositions.push(displacedPos);
+      this.baseKds.push(KdTree.createFrom<Human>(displacedPos));
+    }
   }
 
   protected mediumDistanceOfData(data: IDataPoint<any>[]): number {
@@ -135,12 +167,13 @@ export class AppComponent implements OnInit {
         count+=pi.distance(data[j].point as Point);
         n+=1;
       }
-    }    
+    }
     return count/n;
   }
 
   public oneStep() {
     this.currentDay++;
+    this.posIndex= this.currentDay % this.humansPositions.length;
     this.propagation();
     this.checkHealth();
     this.canvasP5.redraw();
@@ -170,9 +203,9 @@ export class AppComponent implements OnInit {
   }
 
   protected drawHumans() {
-    if (!this.humansPosition) return;
+    if (!this.humansPositions || !this.humansPositions[this.posIndex]) return;
     this.canvasP5.strokeWeight(2);
-    this.humansPosition.forEach((h) => {
+    this.humansPositions[this.posIndex].forEach((h) => {
       const color = this.colorFromHumanStatus(h.data);
       this.canvasP5.stroke(color);
       this.canvasP5.point(h.point.x, h.point.y);
@@ -212,7 +245,7 @@ export class AppComponent implements OnInit {
   /** Se realiza la propagación */
   protected propagation() {
     // Los que son infecciosos
-    const contagiosous= this.humansPosition.filter( e => e.data.hstatus & HStatus.infectious);
+    const contagiosous= this.humansPositions[this.posIndex].filter( e => e.data.hstatus & HStatus.infectious);
     // Los que serán infectados
     const nuevosContagiados=contagiosous.reduce( (acc: Human[], element) => {
       const prov = this.checkInfection(element);
@@ -264,6 +297,9 @@ export class AppComponent implements OnInit {
     this.afectados = totalAfectados-Math.trunc(this.initialInmunes*this.populationNumber);
     this.inmunes=totalInmunes;
     this.infectados=totalInfectados;
+    this.acceleration.add(this.infectados);
+    this.derivated1= this.velMedium.add( this.acceleration.velocity);
+    this.derivated2= this.accMedium.add(this.acceleration.acceleration);
   }
 
   /** Obtiene la lista de nuevos infectados. NO los infecta */
@@ -272,7 +308,7 @@ export class AppComponent implements OnInit {
     const maxDist = this.calcMaxDistance();// Fuera de aquí lo despreciamos
     const numProb = this.sqrDistanceBase * this.infectOp.contagiousProb;
     const zone: Rectangle = Rectangle.fromRadius(fromHuman.point, maxDist);
-    const candidates = this.baseKd.getInZone(zone);
+    const candidates = this.baseKds[this.posIndex].getInZone(zone);
     if (!candidates || candidates.length === 0) return res;
     // Recorremos los candidatos a ver quien es infectable
     candidates.forEach((c) => {
@@ -289,7 +325,7 @@ export class AppComponent implements OnInit {
         prob = numProb / dist;
       }
       const contagiado = getSuccess(prob);
-      
+
       if (contagiado) {
         if (!res) res = [];
         res.push(h);
