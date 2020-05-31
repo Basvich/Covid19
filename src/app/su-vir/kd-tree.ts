@@ -145,7 +145,7 @@ export class KdTree<T> {
         return null;
       }
     }
-    // 2) If current node doesn't contain point, search downward 
+    // 2) If current node doesn't contain point, search downward
     if (this.axisValue(toRemove.point, cd) < this.axisValue(root.location.point, cd)) {
       root.left = this.remove(root.left, toRemove, depth + 1);
     } else {
@@ -176,7 +176,6 @@ export class KdTree<T> {
 
   protected static kdTree<T>(points: IDataPoint<T>[], depth: number): INodeKdTree<T> {
     if (!points || points.length === 0) return null;
-    
     const axis = depth % this.K;
     const sortedPoints: IDataPoint<T>[] = points.sort((p1, p2) =>
       Math.sign(KdTree.axisValue(p1.point, axis) - KdTree.axisValue(p2.point, axis))
@@ -190,9 +189,9 @@ export class KdTree<T> {
     ln = points.length - medianIndex - 1;
     if (ln > 0) node.right = KdTree.kdTree(sortedPoints.slice(medianIndex + 1), depth + 1);
     if (!node.location) {
-      console.log("HAYYY");
+      console.log('HAYYY');
     }
-    console.assert(!!(node.location), "NODO sin LOCATION")
+    console.assert(!!(node.location), 'NODO sin LOCATION');
     return node;
   }
 
@@ -233,7 +232,7 @@ export class KdTree<T> {
     const axis = depth % KdTree.K;
     // console.debug(`node en: [${node.location.point.x}, ${node.location.point.y}]  depth:${depth}`);
     if (zone.fullContains(node.location.point)) {
-      //console.debug('Punto en zona');
+      // console.debug('Punto en zona');
       if (!res) res = [];
       res.push(node.location);
     }
@@ -275,7 +274,6 @@ export class KdTree<T> {
     const axis = depth % KdTree.K;
     const saxis = axis ? 'y' : 'x';
     console.log(`NODO depth:${depth} axis ${saxis}=${KdTree.axisValue(node.location.point, axis)}  point: [${node.location.point.x}, ${node.location.point.y}]`);
-    
     if (node.left) {
       console.log('Left:');
       console.group();

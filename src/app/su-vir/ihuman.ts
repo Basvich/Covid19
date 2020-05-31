@@ -11,7 +11,7 @@ export interface IInfectionHuman {
   /** duracion del periodo de incubación */
   incubation: INormalDist;
   /** Probabilidad de tener sintomas */
-  sintomatic: number;
+  asintomatic: number;
   /** Duracion desde la infección hasta la curación */
   infectionPeriod: INormalDist;
   /** Posibilidad de muerte */
@@ -76,6 +76,7 @@ export class Human {
         if (currentDay >= this.endIncubationDay) {
           this.hstatus &= ~HStatus.incubation;
           this.hstatus |= HStatus.infectious;
+          if(!getSuccess(opt.asintomatic)) this.hstatus |= HStatus.symptomatic;
         }
         return;
       } else {
@@ -94,14 +95,21 @@ export class Human {
 }
 
 export interface IHumanOpt {
+  /** Zona en la que se mueven */
   zone: Rectangle;
+  /** porcentaje de los que se mueven */
+  moving: number;
+  /** Diferentes posiciones que pueden tener */
+  diferentPositions: number;
+  /** distancioa promedio a la que se mueven */
+  distance: number;
 }
 
 export class HumanFactory {
   public static create(count: number, opt: IHumanOpt): Array<Human> {
     const res: Array<Human> = [];
     for (let i = 0; i < count; i++) {
-      const nh = new Human();     
+      const nh = new Human();
       res.push(nh);
     }
     return res;
@@ -151,7 +159,7 @@ function getRndPos(rec: Rectangle): Point {
 }
 
 function getRndNormalDist(dat: INormalDist): number {
-  //return dat.mean;
+  // return dat.mean;
   return getRndNormal(dat.mean, dat.stdDev);
 }
 
@@ -164,7 +172,7 @@ function getRndNormal(mean: number, stdDev: number): number {
 }
 
 /** devuelve un punto en el entorno del anterior, y limitado por rectangle. */
-function getRndGauPos(recLimit: Rectangle, refPoint: Point, stdDev: number): Point{
+export function getRndGauPos(recLimit: Rectangle, refPoint: Point, stdDev: number): Point{
   if(!recLimit.fullContains(refPoint)) throw Error('Ref point invalid');
   let res: Point;
   do{
@@ -188,7 +196,7 @@ export const getRndPopulationPos: PopulationDistribution= function*(recLimit: Re
        yield res;
      }
    }
-}
+};
 
 export const getOrganicPopulationPos: PopulationDistribution= function*(recLimit: Rectangle){
   while(true){
@@ -209,7 +217,7 @@ export const getOrganicPopulationPos: PopulationDistribution= function*(recLimit
       nZone1++; 
     }
   }
-}
+};
 
 export const getConsecutivePopulationPos: PopulationDistribution= function*(recLimit: Rectangle){
   let p=new Point(0,40);
@@ -221,4 +229,4 @@ export const getConsecutivePopulationPos: PopulationDistribution= function*(recL
       if(p.y>recLimit.top) p=new Point(0,0);
     }
   }     
-}
+};
