@@ -1,6 +1,7 @@
-<div class="container">
+
+<main class="container">
   <div class="row">
-    <div class="col" id="optionsCol">
+    <div class="col-3" id="optionsCol">
       <div class="card width: 100%">
         <div class="card-header text-center">Parámetros</div>
         <div class="card-body width: 100%">
@@ -10,52 +11,9 @@
                 <div class="input-group-prepend">
                   <label class="input-group-text" for="inputGroupSelect01">Distribución</label>
                 </div>
-                <select class="custom-select" id="inputGroupSelect01" [(ngModel)]="fDistribution" (ngModelChange)="changeDistribution()" ngbTooltip="toltip">
+                <select class="custom-select form-control-sm" id="inputGroupSelect01" [(ngModel)]="fDistribution" (ngModelChange)="changeDistribution()" ngbTooltip="toltip">
                   <option [ngValue]="item.f" *ngFor="let item of FuncsPopulates" >{{item.nfo}}</option>
                 </select>
-              </div>
-            </li>
-            <li class="list-group-item p-1">
-              <div class="input-group input-group-sm">
-                <div class="input-group-prepend"><span class="input-group-text">Min distancia</span></div>
-                <input type="number" min="0" max="16" step="0.25" [ngModel]="infectOp.distanceBase" (ngModelChange)="setistanceBase($event)">
-                <div class="input-group-append"><span class="input-group-text">m</span></div>
-              </div>
-            </li>
-            <li class="list-group-item p-1">
-              <div class="input-group input-group-sm" ngbTooltip="Probabilidad contagio minima distancia">
-                <div class="input-group-prepend"><span class="input-group-text">Prob contagio</span></div>
-                <input class="w-20" [ngModel]="infectOp.contagiousProb * 100" (ngModelChange)="infectOp.contagiousProb=$event / 100" type="number" min="0" max="100" step="5">
-                <div class="input-group-append"><span class="input-group-text">%</span></div>
-              </div>
-            </li>
-            <li class="list-group-item  p-1">
-              <div class="input-group input-group-sm" ngbTooltip="Periodo medio incubacion en días.">
-                <div class="input-group-prepend"><span class="input-group-text">Incubación</span></div>
-                <input type="number" min="1" max="6" step="0.5" [(ngModel)]="infectOp.humanData.incubation.mean">
-                <div class="input-group-append"><span class="input-group-text">días</span>
-                </div>
-              </div>
-            </li>
-            <li class="list-group-item  p-1">
-              <div class="input-group input-group-sm" ngbTooltip="Periodo medio infeccioso en días después incubación">
-                <div class="input-group-prepend"><span class="input-group-text">Infeccioso</span></div>
-                <input type="number" min="1" max="16" step="0.5" [(ngModel)]="infectOp.humanData.infectionPeriod.mean">
-                <div class="input-group-append"><span class="input-group-text">días</span></div>
-              </div>
-            </li>
-            <li class="list-group-item  p-1">
-              <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren">
-                <div class="input-group-prepend"><span class="input-group-text">Mortalidad</span></div>
-                <input type="number" min="0" max="90" step="5" [ngModel]="infectOp.humanData.lethality * 100" (ngModelChange)="infectOp.humanData.lethality=$event / 100">
-                <div class="input-group-append"><span class="input-group-text">%</span></div>
-              </div>
-            </li>
-            <li class="list-group-item  p-1">
-              <div class="input-group input-group-sm" ngbTooltip="Cuantos ganan inmunidad después de pasar enfermedad y no morir">
-                <div class="input-group-prepend"><span class="input-group-text">Inmunidad</span></div>
-                <input type="number" min="0" max="90" step="5" [ngModel]="infectOp.humanData.immunity * 100" (ngModelChange)="infectOp.humanData.immunity=$event / 100">
-                <div class="input-group-append"><span class="input-group-text">%</span></div>
               </div>
             </li>
             <li class="list-group-item p-1">
@@ -65,12 +23,21 @@
                 <div class="input-group-append"><span class="input-group-text">%</span></div>
               </div>
             </li>
+            <li class="list-group-item p-1">
+              <button class="btn btn-sm btn-outline-primary" (click)="open(infectionsParamsmodal)">Contagio...</button>
+            </li>
+            <li class="list-group-item p-1">
+              <button class="btn btn-sm btn-outline-primary" (click)="open(evolucionParamsmodal)">Evolucion...</button>
+            </li>
+            <li class="list-group-item p-1">
+              <button class="btn btn-sm btn-outline-primary" (click)="open(desplazamientosParamsmodal)">Desplazamiento...</button>
+            </li>
           </ul>
           <button type="button" class="btn btn-block btn-primary" ngbTooltip="Borra y vuelve a emprezar" (click)="setupHumans()">Reiniciar</button>
         </div>
       </div>
     </div>
-    <div class="col">
+    <div class="col-9">
       <div class="row">
         <div class="col" id="containerP5"></div>
       </div>
@@ -79,7 +46,8 @@
           <ul class="list-inline">
             <li class="list-inline-item"><span class="badge badge-pill badge-normal">Normales</span></li>
             <li class="list-inline-item"><span class="badge badge-pill badge-warning" ngbTooltip="Contagiados pero no contagiosos">Incubando</span></li>
-            <li class="list-inline-item"><span class="badge badge-pill badge-danger" ngbTooltip="Pueden contagiar a los demás">Infecciosos</span></li>
+            <li class="list-inline-item"><span class="badge badge-pill badge-asintomatic" ngbTooltip="Pueden contagiar a los demás, aunque no muestra síntomas">Infecciosos asintomaticos</span></li>
+            <li class="list-inline-item"><span class="badge badge-pill badge-danger" ngbTooltip="Pueden contagiar a los demás y muestra claros síntomas">sintomaticos</span></li>
             <li class="list-inline-item"><span class="badge badge-pill badge-success" ngbTooltip="Pasaron la infección y/o son inmunes">Inmunes</span></li>
             <li class="list-inline-item"><span class="badge badge-pill badge-death" ngbTooltip="Fallecidos">Fallecidos</span></li>
           </ul>
@@ -128,7 +96,7 @@
       </dl>
     </div>
   </div>
-</div>
+</main>
 <footer class="bg-dark text-white mt-4">
   <ul class="list-inline">
     <li class="list-inline-item"><span class="badge badge-pill badge-success">{{version}}</span></li>
@@ -137,3 +105,122 @@
       </span></li>
   </ul>
 </footer>
+<ng-template #infectionsParamsmodal let-modal >
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Parámetros contagio</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <ul class="p-0">
+      <li class="list-group-item p-1">
+        <div class="input-group input-group-sm">
+          <div class="input-group-prepend"><span class="input-group-text">Min distancia</span></div>
+          <input type="number" min="0" max="16" step="0.25" [ngModel]="infectOp.distanceBase" (ngModelChange)="setistanceBase($event)">
+          <div class="input-group-append"><span class="input-group-text">m</span></div>
+        </div>
+      </li>
+      <li class="list-group-item p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Probabilidad contagio minima distancia">
+          <div class="input-group-prepend"><span class="input-group-text">Prob contagio</span></div>
+          <input class="w-20" [ngModel]="infectOp.contagiousProb * 100" (ngModelChange)="infectOp.contagiousProb=$event / 100" type="number" min="0" max="100" step="5">
+          <div class="input-group-append"><span class="input-group-text">%</span></div>
+        </div>
+      </li>      
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Ok</button>
+  </div>
+</ng-template>
+
+<ng-template #evolucionParamsmodal let-modal >
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Evolución enfermedad</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <ul class="p-0">      
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Periodo medio incubacion en días.">
+          <div class="input-group-prepend"><span class="input-group-text">Incubación</span></div>
+          <input type="number" min="1" max="6" step="0.5" [(ngModel)]="infectOp.humanData.incubation.mean">
+          <div class="input-group-append"><span class="input-group-text">días</span>
+          </div>
+        </div>
+      </li>
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Los que son asintomáticos">
+          <div class="input-group-prepend"><span class="input-group-text">Asintomaticos</span></div>
+          <input type="number" min="1" max="99" step="5" [ngModel]="infectOp.humanData.asintomatic * 100" (ngModelChange)="infectOp.humanData.asintomatic=$event / 100">
+          <div class="input-group-append"><span class="input-group-text">%</span></div>
+        </div>
+      </li>
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Periodo medio infeccioso en días después incubación">
+          <div class="input-group-prepend"><span class="input-group-text">Infeccioso</span></div>
+          <input type="number" min="1" max="16" step="0.5" [(ngModel)]="infectOp.humanData.infectionPeriod.mean">
+          <div class="input-group-append"><span class="input-group-text">días</span></div>
+        </div>
+      </li>
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Cuantos mueren">
+          <div class="input-group-prepend"><span class="input-group-text">Mortalidad</span></div>
+          <input type="number" min="0" max="90" step="5" [ngModel]="infectOp.humanData.lethality * 100" (ngModelChange)="infectOp.humanData.lethality=$event / 100">
+          <div class="input-group-append"><span class="input-group-text">%</span></div>
+        </div>
+      </li>
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Cuantos ganan inmunidad después de pasar enfermedad y no morir">
+          <div class="input-group-prepend"><span class="input-group-text">Inmunidad</span></div>
+          <input type="number" min="0" max="90" step="5" [ngModel]="infectOp.humanData.immunity * 100" (ngModelChange)="infectOp.humanData.immunity=$event / 100">
+          <div class="input-group-append"><span class="input-group-text">%</span></div>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Ok</button>
+  </div>
+</ng-template>
+
+<ng-template #desplazamientosParamsmodal let-modal >
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Desplazamientos</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <ul class="p-0">      
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Porcentaje que se mueven">
+          <div class="input-group-prepend"><span class="input-group-text">Desplazamientos</span></div>
+          <input type="number" min="1" max="90" step="0.5"  [ngModel]="opt.moving" (ngModelChange)="opt.moving=$event / 100">
+          <div class="input-group-append"><span class="input-group-text">%</span>
+          </div>
+        </div>
+      </li>
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Cuantas posiciones diferentes">
+          <div class="input-group-prepend"><span class="input-group-text">Posiciones</span></div>
+          <input type="number" min="0" max="5" step="1" [(ngModel)]="opt.diferentPositions">
+          <div class="input-group-append"><span class="input-group-text">lugares</span></div>
+        </div>
+      </li>     
+      <li class="list-group-item  p-1">
+        <div class="input-group input-group-sm" ngbTooltip="Distancia promedio de alejamiento">
+          <div class="input-group-prepend"><span class="input-group-text">Distancia</span></div>
+          <input type="number" min="10" max="300" step="10" [(ngModel)]="opt.distance">
+          <div class="input-group-append"><span class="input-group-text">m</span></div>
+        </div>
+      </li>     
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Ok</button>
+  </div>
+</ng-template>

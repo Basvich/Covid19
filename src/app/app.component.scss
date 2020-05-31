@@ -1,8 +1,10 @@
 $deadcolor:DimGray;
+$asintomaticColor: plum;
 $normalColor:	lightgray;
 
 $theme-colors: (
   "death": $deadcolor,
+  "asintomatic": $asintomaticColor,
   "normal": $normalColor
 );
 
